@@ -1,0 +1,76 @@
+{
+  "generators": {
+    "21": {
+      "name": "PG10-504",
+      "pulses": { "min": 1, "max": 1000, "default": 1 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 200, "max": 10000, "default": 500 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+      "coupling": { "options": ["HV-OUT", "L->N","L->PE","N->L","N->PE"], "default": "L->N" },
+      "impedance": { "options": ["None", "18µ","9µ+10Ω"], "default": "18µ" },
+	    "ustep": 2.5
+    },
+    "60": {
+      "name": "IPG605",
+      "pulses": { "min": 1, "max": 1000, "default": 1 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 200, "max": 6000, "default": 500 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+	    "ustep": 1.5
+    },
+    "61": {
+      "name": "IPG1012",
+      "pulses": { "min": 1, "max": 1000, "default": 1 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 200, "max": 10000, "default": 500 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+	    "ustep": 2.5
+    },
+    "62": {
+      "name": "IPG1218",
+      "pulses": { "min": 1, "max": 1000, "default": 5 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 200, "max": 12000, "default": 12000 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+      "ustep": 3
+    },
+    "63": {
+      "name": "IPG2025",
+      "pulses": { "min": 2, "max": 1000, "default": 1 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 200, "max": 20000, "default": 500 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+      "ustep": 5
+    },
+    "64": {
+      "name": "IPG2436",
+      "pulses": { "min": 1, "max": 1000, "default": 1 },
+      "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+      "voltage": { "min": 500, "max": 24000, "default": 500 },
+      "reptime": { "min": 5, "max": 1000, "default": 5 },
+      "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+      "tdelay": { "min": 0, "max": 359, "default": 0 },
+	    "ustep": 6
+    }
+  },
+  "fallback": { 
+    "name": "Unbekannter Generator", 
+    "pulses": { "min": 1, "max": 1000, "default": 1 },
+    "polarity": { "options": ["+", "-", "+/-"], "default": "+" },
+    "voltage": { "min": 200, "max": 12000, "default": 500 },
+    "reptime": { "min": 5, "max": 1000, "default": 5 },
+    "ixtlimit": { "min": 1, "max": 1500, "default": 1500 },
+    "tdelay": { "min": 0, "max": 359, "default": 0 },
+	  "ustep": 1
+  }
+}
+
