@@ -5,126 +5,81 @@
     <title>Generator Steuerung</title>
     <style>
         body { font-family: Arial, sans-serif; margin:20px; }
-        fieldset { padding:10px; margin-bottom:10px; width:400px; box-sizing:border-box; } /* Parameterbox größer */
-        label { display:block; margin:4px 0; }
-        input, select { width:95%; padding:4px; box-sizing:border-box; }
+        fieldset { padding:10px; margin-bottom:10px; width:440px; box-sizing:border-box; }
+        .param-row { display:flex; align-items:center; gap:6px; margin:4px 0; }
+        .param-row .param-label { min-width:150px; font-size:14px; }
+        .param-row input, .param-row select { flex:1; padding:4px; box-sizing:border-box; }
+        .param-row .param-unit { min-width:28px; font-size:12px; color:#666; }
         .container { display:flex; gap:20px; align-items:flex-start; }
         .output-box, .monitor-box { border:1px solid #ccc; padding:10px; width:250px; background:#f9f9f9; white-space:pre-line; }
         .gen-name { font-weight:bold; margin-bottom:8px; font-size:18px; }
         .btn { padding:4px 8px; margin:3px; }
+        #coupling-section { display:none; }
+        .monitor-row { margin:3px 0; }
     </style>
     <script src="js/script.js" defer></script>
 </head>
 <body>
-<div class="header" style="
-    display:flex; 
-    align-items:center; 
-    justify-content:space-between; 
-    background:#fff; 
-    padding:8px 16px; 
-    border-bottom:2px solid #ccc;
-">
-    <!-- Logo -->
-    <div class="logo">
-        <img src="LOGO.bmp" alt="Logo" style="height:50px;">
-        </div>
+<div class="header" style="display:flex;align-items:center;justify-content:space-between;background:#fff;padding:8px 16px;border-bottom:2px solid #ccc;">
+    <div class="logo"><img src="LOGO.bmp" alt="Logo" style="height:50px;"></div>
+    <nav>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;gap:20px;">
+            <li><a href="index.html" style="text-decoration:none;font-weight:bold;color:#333;">Generator</a></li>
+            <li><a href="service.html" style="text-decoration:none;font-weight:bold;color:#333;">Service &amp; Support</a></li>
+        </ul>
+    </nav>
+</div>
+<br>
 
-        <!-- Navigation -->
-        <nav>
-            <ul style="
-                list-style:none; 
-                margin:0; 
-                padding:0; 
-                display:flex; 
-                gap:20px;
-            ">
-                <li><a href="index.html" style="
-                    text-decoration:none; 
-                    font-weight:bold; 
-                    color:#333;
-                ">Generator</a></li>
-                <li><a href="service.html" style="
-                    text-decoration:none; 
-                    font-weight:bold; 
-                    color:#333;
-                ">Service &amp; Support</a></li>
-            </ul>
-        </nav>
-    </div>
-    <br>
+<div class="gen-name" id="gen-name">Unbekannt</div>
+<div class="container">
+    <form id="control-form">
+        <fieldset>
+            <legend>Parameter</legend>
+            <div id="param-fields"><!-- dynamisch --></div>
 
-    <div class="gen-name" id="gen-name">Unbekannt</div>
-    <div class="container">
-        <form id="control-form">
-            <fieldset>
-                <legend>Parameter</legend>
-                <label>No. of Pulses:
-                    <input type="number" id="pulses">
-                </label>
-                <label>Polarity:
-                    <select id="polarity">
-                        <option value="+">+</option>
-                        <option value="-">-</option>
-                        <option value="+/-">+/-</option>
-                    </select>
-                </label>
-                <label>Voltage:
-                    <input type="number" inputmode="numeric" id="voltage">
-                </label>
-                <label>Repetition time:
-                    <input type="number" id="reptime">
-                </label>
-                <label>Ixt Limit:
-                    <input type="number" id="ixtlimit">
-                </label>
-                <label>Tdelay:
-                    <input type="number" id="tdelay">
-                </label>
-            </fieldset>
-            <button class="btn" type="button" data-action="On">&#x1F534; On</button>
-            <button class="btn" type="button" data-action="Off">&#x1F7E2; Off</button>            
-            <button class="btn" type="button" data-action="Start">&#x25B6; Start</button>
-            <button class="btn" type="button" data-action="Pause">&#10073;&#10073; Pause</button>
-            <button class="btn" type="button" data-action="Stop">&#x23F9; Stop</button>
-        </form>
-
-        <!-- Monitor Box jetzt direkt neben Parameter -->
-        <div class="monitor-box">
-            <strong>Monitor:</strong><br>
-            U: <span id="mon-U">-</span>
-            <div style="position: relative; width: 100%; height: 20px; background: #ddd; border-radius: 4px; margin: 4px 0;">
-                <div id="bar-U" style="
-                    position:absolute;
-                    top:0; left:0;
-                    height:100%;
-                    width:0%;
-                    background:#4caf50;
-                    border-radius:4px;">
+            <!-- Koppelnetzwerk — nur wenn supportsCoupling=true -->
+            <div id="coupling-section">
+                <hr style="margin:8px 0;">
+                <div class="param-row">
+                    <span class="param-label">CDN:</span>
+                    <select id="cdn" onchange="onCdnChange()"></select>
+                    <span class="param-unit"></span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Coupling:</span>
+                    <select id="coupling"></select>
+                    <span class="param-unit"></span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Impedance:</span>
+                    <select id="impedance"></select>
+                    <span class="param-unit"></span>
                 </div>
             </div>
-            Upeak: <span id="mon-Upeak">-</span><br>
-            Charge: <span id="mon-Ipeak">-</span><br>
-            <div id="mon-Pulse-line">Pulse: <span id="mon-Pulse">-</span></div>
-            <div id="mon-Rdy-line">Rdy: <span id="mon-Rdy">-</span></div>
-        </div>
-        <div class="evaluation-box" id="eval-box" style="
-            border:1px solid #ccc; 
-            padding:10px; 
-            width:200px; 
-            text-align:center; 
-            font-size:24px; 
-            font-weight:bold;
-            background:#f9f9f9;
-        ">
-            Evaluation
-        </div>
+        </fieldset>
 
+        <button class="btn" type="button" data-action="On">&#x1F534; On</button>
+        <button class="btn" type="button" data-action="Off">&#x1F7E2; Off</button>
+        <button class="btn" type="button" data-action="Start">&#x25B6; Start</button>
+        <button class="btn" type="button" data-action="Pause">&#10073;&#10073; Pause</button>
+        <button class="btn" type="button" data-action="Stop">&#x23F9; Stop</button>
+    </form>
 
-        <!-- Output Box rechts außen -->
-        <div class="output-box" id="output-box">
-            <strong>Output:</strong><br>
-            <pre id="output"></pre>
-        </div>
+    <!-- Monitor Box — Inhalte dynamisch je nach monitor-Array -->
+    <div class="monitor-box">
+        <strong>Monitor:</strong><br>
+        <div id="monitor-fields"><!-- dynamisch --></div>
     </div>
+
+    <div id="eval-box" style="border:1px solid #ccc;padding:10px;width:200px;text-align:center;font-size:24px;font-weight:bold;background:#f9f9f9;">
+        Evaluation
+    </div>
+
+    <div class="output-box" id="output-box">
+        <strong>Output:</strong><br>
+        <pre id="output"></pre>
+    </div>
+</div>
 </body>
 </html>

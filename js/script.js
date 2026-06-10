@@ -1,160 +1,215 @@
-let generatorId = null;
-let generatorName = "Unbekannt";
+let generatorId     = null;
+let generatorName   = "Unbekannt";
 let monitorInterval = null;
-let ustep = 1; // Standard, falls JSON keinen Wert hat
-let maxVoltage = 12000; 
-let debugMode = true; // Debug-Modus hier umschalten
+let ustep           = 1;
+let maxVoltage      = 12000;
+let genConfig       = null;
+let globalConfig    = null;   // komplette config.json (für cdnList)
+let debugMode       = true;
 
-const names = {
-    60: "IPG605",
-    61: "IPG1012",
-    62: "IPG1218",
-    63: "IPG2025",
-    64: "IPG2436"
+// Monitor-Definitionen: label, unit, suffix für Anzeige
+const MONITOR_META = {
+    U:      { label: "U",      unit: "V",  barId: "bar-U" },
+    Upeak:  { label: "Upeak",  unit: "V",  barId: null },
+    Ipeak:  { label: "Charge", unit: "µC", barId: null },
+    Pulse:  { label: "Pulse",  unit: "",   barId: null },
+    Rdy:    { label: "Rdy",    unit: "",   barId: null }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
     init();
-
     document.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", () => handleAction(btn.dataset.action));
     });
-
-    // Start, Pause, Stop initial deaktivieren
     setRunButtonsEnabled(false);
 });
 
+// ── Buttons ───────────────────────────────────────────────────────────────────
 function setRunButtonsEnabled(enabled) {
     ["Start", "Pause", "Stop"].forEach(action => {
         const btn = document.querySelector(`button[data-action="${action}"]`);
         if (btn) {
-            btn.disabled = !enabled;
+            btn.disabled      = !enabled;
             btn.style.opacity = enabled ? "1" : "0.4";
-            btn.style.cursor = enabled ? "pointer" : "not-allowed";
+            btn.style.cursor  = enabled ? "pointer" : "not-allowed";
         }
     });
 }
 
+// ── Init ──────────────────────────────────────────────────────────────────────
 function init() {
     sendCommand("0:Control").then(response => {
         if (!response) return;
-        const parts = response.split(":");
-        generatorId = parseInt(parts[0]);
-        generatorName = names[generatorId] || "Unbekannt";
-        localStorage.setItem("generatorId", generatorId); // für protected.php
-        document.getElementById("gen-name").textContent = generatorName;
-                      // Pulse & Rdy nur anzeigen, wenn Debug aktiviert
+        generatorId = parseInt(response.split(":")[0]);
+
         if (!debugMode) {
-            // document.getElementById("mon-Pulse-line").style.display = "none";
-            document.getElementById("mon-Rdy-line").style.display = "none";
             document.getElementById("output-box").style.display = "none";
-        }
-        else {
-            // document.getElementById("mon-Pulse-line").style.display = "block";
-            document.getElementById("mon-Rdy-line").style.display = "block";
-            document.getElementById("output-box").style.display = "block";
         }
 
         loadDefaults();
     });
 }
 
+// ── Config laden ──────────────────────────────────────────────────────────────
 function loadDefaults() {
     fetch("config.json?ts=" + Date.now())
         .then(res => res.json())
         .then(config => {
-            // Generator-ID als String für JSON-Zugriff
-            let genConfig = config.generators[String(generatorId)];
-            console.log(genConfig);
-            console.log(genConfig.voltage);
-            console.log(genConfig.voltage.min);
-            console.log(genConfig.voltage.max);
-            if (!genConfig) return;
-            document.getElementById("pulses").value = genConfig.pulses.default;
-            document.getElementById("voltage").value = genConfig.voltage.default;
-            document.getElementById("reptime").value = genConfig.reptime.default;
-            document.getElementById("ixtlimit").value = genConfig.ixtlimit.default;
-            document.getElementById("tdelay").value = genConfig.tdelay.default;
-            document.getElementById("polarity").value = genConfig.polarity.default;
+            globalConfig  = config;
+            genConfig     = config.generators[String(generatorId)] || config.fallback;
+            generatorName = genConfig.name || "Unbekannt";
 
-            // 🔹 ustep immer übernehmen
-            ustep = parseFloat(genConfig.ustep);
-            maxVoltage = parseInt(genConfig.voltage.max, 10);  // 🔹 Max Voltage als Integer
+            localStorage.setItem("generatorId", generatorId);
+            localStorage.setItem("pfnId", genConfig.pfnId || 9);
 
-            setupValidation("pulses", genConfig.pulses);
-            setupValidation("voltage", genConfig.voltage);
-            setupValidation("reptime", genConfig.reptime);
-            setupValidation("ixtlimit", genConfig.ixtlimit);
-            setupValidation("tdelay", genConfig.tdelay);
+            document.getElementById("gen-name").textContent = generatorName;
+            ustep      = parseFloat(genConfig.ustep);
+            maxVoltage = (getParamCfg("voltage") || {}).max || 12000;
 
+            buildParamFields(genConfig.parameters);
+            buildMonitorFields(genConfig.monitor || ["U", "Upeak", "Ipeak", "Pulse", "Rdy"]);
+
+            // Coupling
+            const couplingSection = document.getElementById("coupling-section");
+            if (genConfig.supportsCoupling) {
+                couplingSection.style.display = "block";
+                buildCdnSelect();
+                applyCouplingNetwork("default");
+            } else {
+                couplingSection.style.display = "none";
+            }
         });
 }
 
-function setupValidation(id, cfg) {
+// ── Parameter-Felder aufbauen ─────────────────────────────────────────────────
+function buildParamFields(parameters) {
+    const container = document.getElementById("param-fields");
+    container.innerHTML = "";
+    parameters.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "param-row";
+        row.id = `row-${p.id}`;
 
-    const input = document.getElementById(id);
+        const labelEl = document.createElement("span");
+        labelEl.className   = "param-label";
+        labelEl.textContent = p.label + (p.unit ? ` [${p.unit}]` : "") + ":";
 
-    // HTML Grenzen setzen
-    input.min = cfg.min;
-    input.max = cfg.max;
-
-    // Minus und e verhindern
-    input.addEventListener("keydown", function(e) {
-
-        if (e.key === "-" || e.key === "e" || e.key === "E") {
-            e.preventDefault();
+        let input;
+        if (p.type === "select") {
+            input = document.createElement("select");
+            (p.options || []).forEach(opt => {
+                const o = document.createElement("option");
+                o.value = opt; o.textContent = opt;
+                if (opt === p.default) o.selected = true;
+                input.appendChild(o);
+            });
+        } else {
+            input = document.createElement("input");
+            input.type      = "number";
+            input.inputMode = "numeric";
+            input.min       = p.min;
+            input.max       = p.max;
+            input.value     = p.default;
+            setupValidation(input, p);
         }
-    });
+        input.id = p.id;
 
-    // Paste verhindern
-    input.addEventListener("paste", function(e) {
+        const unitEl = document.createElement("span");
+        unitEl.className = "param-unit";
 
-        let text = (e.clipboardData || window.clipboardData).getData("text");
-
-        if (text.includes("-")) {
-            e.preventDefault();
-        }
-    });
-
-    // // JEDEN Wert hart korrigieren
-    // input.addEventListener("input", function() {
-
-    //     // Alles außer Zahlen/Punkt entfernen
-    //     input.value = input.value.replace(/[^0-9.]/g, "");
-
-    //     let val = parseFloat(input.value);
-
-    //     if (isNaN(val)) {
-    //         input.value = cfg.min;
-    //         return;
-    //     }
-
-    //     // Unter Minimum
-    //     if (val < cfg.min) {
-    //         input.value = cfg.min;
-    //     }
-
-    //     // Über Maximum
-    //     if (val > cfg.max) {
-    //         input.value = cfg.max;
-    //     }
-    // });
-
-    // Beim Verlassen nochmals prüfen
-    input.addEventListener("blur", function() {
-
-        let val = parseFloat(input.value);
-
-        if (isNaN(val) || val < cfg.min) {
-            input.value = cfg.min;
-        }
-
-        if (val > cfg.max) {
-            input.value = cfg.max;
-        }
+        row.appendChild(labelEl);
+        row.appendChild(input);
+        row.appendChild(unitEl);
+        container.appendChild(row);
     });
 }
 
+// ── Monitor-Felder aufbauen ───────────────────────────────────────────────────
+function buildMonitorFields(monitorList) {
+    const container = document.getElementById("monitor-fields");
+    container.innerHTML = "";
+
+    monitorList.forEach(key => {
+        const meta = MONITOR_META[key];
+        if (!meta) return;
+
+        const div = document.createElement("div");
+        div.className = "monitor-row";
+        div.id = `mon-row-${key}`;
+
+        if (key === "U") {
+            div.innerHTML = `
+                U: <span id="mon-U">-</span>
+                <div style="position:relative;width:100%;height:20px;background:#ddd;border-radius:4px;margin:4px 0;">
+                    <div id="bar-U" style="position:absolute;top:0;left:0;height:100%;width:0%;background:#4caf50;border-radius:4px;"></div>
+                </div>`;
+        } else {
+            div.innerHTML = `${meta.label}: <span id="mon-${key}">-</span>${meta.unit ? ' ' + meta.unit : ''}<br>`;
+        }
+        container.appendChild(div);
+    });
+}
+
+// ── CDN-Select aufbauen — nur im Generator definierte Netzwerke ──────────────
+function buildCdnSelect() {
+    const sel      = document.getElementById("cdn");
+    const networks = genConfig.couplingNetworks || {};
+    sel.innerHTML  = "";
+    Object.entries(networks).forEach(([key, net]) => {
+        const o = document.createElement("option");
+        // value = cdnIndex falls vorhanden, sonst key
+        o.value       = net.cdnIndex !== undefined ? net.cdnIndex : key;
+        o.textContent = net.name || key;
+        sel.appendChild(o);
+    });
+}
+
+// ── CDN-Auswahl geändert ──────────────────────────────────────────────────────
+function onCdnChange() {
+    const cdnIndex = parseInt(document.getElementById("cdn").value, 10);
+    // CDN-Index → passendes couplingNetwork suchen
+    // Konvention: couplingNetworks-Key kann "CDN_<index>" sein, sonst "default"
+    const networks = genConfig.couplingNetworks || {};
+    const netKey   = Object.keys(networks).find(k => {
+        // Prüfe ob der Key einen Index-Kommentar hat oder direkt per Index gemappt ist
+        const net = networks[k];
+        return net.cdnIndex === cdnIndex;
+    }) || "default";
+
+    applyCouplingNetwork(netKey);
+
+    // CDN-Befehl an Generator senden
+    sendCommand(`${generatorId}:Parameter:${genConfig.type}:CDN:${cdnIndex}`).then(showOutput);
+}
+
+// ── Koppelnetzwerk anwenden ───────────────────────────────────────────────────
+function applyCouplingNetwork(networkKey) {
+    const networks = genConfig.couplingNetworks || {};
+    const net      = networks[networkKey] || networks["default"] || null;
+    if (!net) return;
+    fillSelect("coupling",  (net.coupling  || {}).options || [], (net.coupling  || {}).default || "");
+    fillSelect("impedance", (net.impedance || {}).options || [], (net.impedance || {}).default || "");
+}
+
+function fillSelect(id, options, defaultVal) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = "";
+    options.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt; o.textContent = opt;
+        if (opt === defaultVal) o.selected = true;
+        sel.appendChild(o);
+    });
+}
+
+// ── Hilfsfunktion ─────────────────────────────────────────────────────────────
+function getParamCfg(id) {
+    if (!genConfig || !genConfig.parameters) return null;
+    return genConfig.parameters.find(p => p.id === id) || null;
+}
+
+// ── Aktion ausführen ──────────────────────────────────────────────────────────
 function handleAction(action) {
     if (!generatorId) return;
 
@@ -166,125 +221,131 @@ function handleAction(action) {
     }
 
     if (action === "Start") {
-        const pulses = document.getElementById("pulses").value;
-        const voltage = document.getElementById("voltage").value;
-        const reptime = document.getElementById("reptime").value;
-        const tdelay = document.getElementById("tdelay").value;
-        const ixtlimit = document.getElementById("ixtlimit").value;
-        const polarity = document.getElementById("polarity").value;
+        const type   = genConfig ? genConfig.type : "IPG";
         const polMap = { "+": 0, "-": 1, "+/-": 2 };
-        const polVal = polMap[polarity];
 
-        sendCommand(`${generatorId}:Parameter:IPG:PulsNo:${pulses}`);
-        sendCommand(`${generatorId}:Parameter:IPG:Voltage:${voltage}`);
-        sendCommand(`${generatorId}:Parameter:IPG:RepTime:${reptime}`);
-        sendCommand(`${generatorId}:Parameter:IPG:TDelay:${tdelay}`);
-        sendCommand(`${generatorId}:Parameter:IPG:IxtLimit:${ixtlimit}`);
-        sendCommand(`${generatorId}:Parameter:IPG:Pol:${polVal}`);
+        genConfig.parameters.forEach(p => {
+            const el = document.getElementById(p.id);
+            if (!el) return;
+            const cmdKey = p.cmd || p.id;
+            let val = el.value;
+            if (p.id === "polarity") val = polMap[val] ?? 0;
+            sendCommand(`${generatorId}:Parameter:${type}:${cmdKey}:${val}`);
+        });
+
+        if (genConfig.supportsCoupling) {
+            const cdnEl      = document.getElementById("cdn");
+            const couplingEl = document.getElementById("coupling");
+            const impedanceEl= document.getElementById("impedance");
+            if (cdnEl)       sendCommand(`${generatorId}:Parameter:${type}:CDN:${cdnEl.value}`);
+            if (couplingEl)  sendCommand(`${generatorId}:Parameter:${type}:Coupling:${couplingEl.value}`);
+            if (impedanceEl) sendCommand(`${generatorId}:Parameter:${type}:Impedance:${impedanceEl.value}`);
+        }
 
         startMonitoring();
     }
+
     sendCommand(`${generatorId}:Control:${action}`).then(showOutput);
 
-    if (action === "Stop") {
-        stopMonitoring();
-    }
+    if (action === "Stop") stopMonitoring();
 }
 
+// ── TCP ───────────────────────────────────────────────────────────────────────
 function sendCommand(cmd) {
-    // console.log("Sende:", cmd);
     return fetch("tcp.php", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "cmd=" + encodeURIComponent(cmd)
-    })
-    .then(res => res.text())
-    .then(text => {
-        // console.log("Empfangen:", text);
-        return text;
-    });
+        body:    "cmd=" + encodeURIComponent(cmd)
+    }).then(res => res.text());
 }
 
 function showOutput(text) {
-    document.getElementById("output").textContent = text;
+    const el = document.getElementById("output");
+    if (el) el.textContent = text;
 }
 
+// ── Monitoring ────────────────────────────────────────────────────────────────
 function startMonitoring() {
     if (monitorInterval) clearInterval(monitorInterval);
-    monitorInterval = setInterval(fetchMonitorValues, 20); // alle 500ms
-    fetchMonitorValues(); // sofort erste Abfrage
+    monitorInterval = setInterval(fetchMonitorValues, 20);
+    fetchMonitorValues();
 }
 
 function stopMonitoring() {
-    if (monitorInterval) {
-        clearInterval(monitorInterval);
-        monitorInterval = null;
-    }
+    if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
 }
 
 function fetchMonitorValues() {
-    if (!generatorId) return;
+    if (!generatorId || !genConfig) return;
 
-    // Alle Monitorbefehle in EINEM String mit \\n trennen
-    const monitorCmd = [
-        `${generatorId}:Monitor:U`,
-        `${generatorId}:Monitor:Upeak`,
-        `${generatorId}:Monitor:Ipeak`,
-        `${generatorId}:Monitor:Pulse`,
-        `${generatorId}:Monitor:Rdy`
-    ].join("\n");
+    const activeMonitors = genConfig.monitor || ["U", "Upeak", "Ipeak", "Pulse", "Rdy"];
+    const monitorCmd = activeMonitors
+        .map(k => `${generatorId}:Monitor:${k}`)
+        .join("\n");
 
     sendCommand(monitorCmd).then(response => {
         if (!response) return;
 
-        const rawLines = response.split(/[\r\n]+/).map(l => l.trim()).filter(l => l.length > 0);
-        let monitorData = {};
-
-        rawLines.forEach(line => {
+        const monitorData = {};
+        response.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean).forEach(line => {
             const parts = line.split(":").map(p => p.trim());
-            if (parts.length >= 4) {
-                monitorData[parts[2]] = parseInt(parts[3], 10);
+            if (parts.length >= 4) monitorData[parts[2]] = parseInt(parts[3], 10);
+        });
+
+        // U mit Balken
+        if ("U" in monitorData && document.getElementById("mon-U")) {
+            const scaledU = monitorData["U"] * ustep;
+            document.getElementById("mon-U").textContent = scaledU + " V";
+            const barU = document.getElementById("bar-U");
+            if (barU) barU.style.width = Math.min((scaledU / maxVoltage) * 100, 100) + "%";
+        }
+
+        // Alle anderen aktiven Monitor-Werte
+        ["Upeak", "Ipeak", "Pulse", "Rdy"].forEach(key => {
+            if (key in monitorData) {
+                const el = document.getElementById(`mon-${key}`);
+                if (el) el.textContent = monitorData[key];
             }
         });
 
-        // 🔹 U mit ustep multiplizieren
-        if ("U" in monitorData) {
-            const scaledU = (monitorData["U"] * ustep);
-            document.getElementById("mon-U").textContent = scaledU + " V";
-
-            let percent = Math.min((scaledU / maxVoltage) * 100, 100);
-            document.getElementById("bar-U").style.width = percent + "%";
-        }
-        if ("Upeak" in monitorData) document.getElementById("mon-Upeak").textContent = monitorData["Upeak"] + " V";
-        if ("Ipeak" in monitorData) document.getElementById("mon-Ipeak").textContent = monitorData["Ipeak"] + " µC";
-        if ("Pulse" in monitorData) document.getElementById("mon-Pulse").textContent = monitorData["Pulse"];
-        if ("Rdy" in monitorData) document.getElementById("mon-Rdy").textContent = monitorData["Rdy"];
-
-        // if ("Ipeak" in monitorData && "Rdy" in monitorData) {
-            const ipeak = monitorData["Ipeak"];
-            const rdy = monitorData["Rdy"];
-            const ixtLimit = parseFloat(document.getElementById("ixtlimit").value);
-            console.log("Ipeak:", ipeak, "Rdy:", rdy, "IxtLimit:", ixtLimit);
+        // Eval-Box (nur wenn ixtlimit und Rdy vorhanden)
+        const ixtEl = document.getElementById("ixtlimit");
+        if (ixtEl && "Rdy" in monitorData && "Ipeak" in monitorData) {
+            const rdy      = monitorData["Rdy"];
+            const ipeak    = monitorData["Ipeak"];
+            const ixtLimit = parseFloat(ixtEl.value);
+            const evalBox  = document.getElementById("eval-box");
             if (rdy === 1) {
-                if (ipeak < ixtLimit) {
-                    document.getElementById("eval-box").textContent = "PASS";
-                    document.getElementById("eval-box").style.color = "green";
-                } else {
-                    document.getElementById("eval-box").textContent = "FAIL";
-                    document.getElementById("eval-box").style.color = "red";
-                }
+                evalBox.textContent = ipeak < ixtLimit ? "PASS" : "FAIL";
+                evalBox.style.color = ipeak < ixtLimit ? "green" : "red";
             } else {
-                document.getElementById("eval-box").textContent = "WAIT";
-                document.getElementById("eval-box").style.color = "black";
+                evalBox.textContent = "WAIT";
+                evalBox.style.color = "black";
             }
-        // }
-
-
-        // Auto-Stop prüfen
-        const pulsesSet = parseInt(document.getElementById("pulses").value, 10);
-        if (monitorData["Pulse"] >= pulsesSet && monitorData["Rdy"] === 1) {
-            sendCommand(`${generatorId}:Control:Stop`).then(showOutput);
-            stopMonitoring();
         }
+
+        // Auto-Stop
+        const pulsesEl = document.getElementById("pulses");
+        if (pulsesEl && "Pulse" in monitorData && "Rdy" in monitorData) {
+            if (monitorData["Pulse"] >= parseInt(pulsesEl.value, 10) && monitorData["Rdy"] === 1) {
+                sendCommand(`${generatorId}:Control:Stop`).then(showOutput);
+                stopMonitoring();
+            }
+        }
+    });
+}
+
+// ── Validierung ───────────────────────────────────────────────────────────────
+function setupValidation(input, cfg) {
+    input.addEventListener("keydown", e => {
+        if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
+    });
+    input.addEventListener("paste", e => {
+        if ((e.clipboardData || window.clipboardData).getData("text").includes("-")) e.preventDefault();
+    });
+    input.addEventListener("blur", () => {
+        let val = parseFloat(input.value);
+        if (isNaN(val) || val < cfg.min) input.value = cfg.min;
+        if (val > cfg.max) input.value = cfg.max;
     });
 }
