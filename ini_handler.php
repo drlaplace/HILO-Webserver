@@ -23,7 +23,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 define('INI_FILE', '/123/hilo.ini');
-define('PFN_ID', 9);
+
+// pfnId: GET-Parameter hat Vorrang, dann POST-Body, dann Fallback 9
+// WICHTIG: define() wird erst nach dem Body-Parsing gesetzt
+$pfnId = 9;
+if (isset($_GET['pfn']))  $pfnId = (int)$_GET['pfn'];
+// Für POST: Body wird weiter unten geparst, dort $dynamic_pfn setzen
 
 function readIniRaw() {
     if (!file_exists(INI_FILE)) return null;
@@ -59,22 +64,29 @@ function writeIniRaw(array $data) {
     return true;
 }
 
-function sectionName(int $idx): string {
-    return 'V_Control%20' . PFN_ID . '%20' . $idx;
+function sectionName(int $pfn, int $idx): string {
+    return 'V_Control%20' . $pfn . '%20' . $idx;
 }
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $idx     = isset($_GET['table']) ? (int)$_GET['table'] : 0;
-    $section = sectionName($idx);
+    $section = sectionName($pfnId, $idx);
     $data    = readIniRaw();
 
     if ($data === null) {
         echo json_encode(["error" => "INI nicht gefunden: " . INI_FILE]); exit;
     }
     if (!isset($data[$section])) {
-        echo json_encode(["VControll"=>100,"VControllneg"=>100,
-            "pos"=>array_fill(0,10,0),"neg"=>array_fill(0,10,0)]); exit;
+        // Sektion fehlt — Standardwerte inkl. sections zurückgeben
+        echo json_encode([
+            "VControll"    => 100,
+            "VControllneg" => 100,
+            "pos"          => array_fill(0, 10, 0),
+            "neg"          => array_fill(0, 10, 0),
+            "sections"     => array_fill(0, 10, 0),
+            "_debug"       => "Sektion nicht gefunden: $section"
+        ]); exit;
     }
     $sec = $data[$section];
     $res = [
@@ -98,6 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!is_array($body)) {
         echo json_encode(["error" => "Kein gültiges JSON empfangen"]); exit;
     }
+
+    // pfnId aus POST-Body, Fallback 9
+    $dynamic_pfn = isset($body['pfn']) ? (int)$body['pfn'] : 9;
     if (!file_exists(INI_FILE)) {
         echo json_encode(["error" => "INI nicht gefunden: " . INI_FILE]); exit;
     }
@@ -112,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $neg      = (isset($body['neg'])      && is_array($body['neg']))      ? $body['neg']      : array_fill(0,10,0);
     $sections = (isset($body['sections']) && is_array($body['sections'])) ? $body['sections'] : array_fill(0,10,0);
 
-    $section = sectionName($idx);
+    $section = sectionName($dynamic_pfn, $idx);
     $data    = readIniRaw();
     if (!isset($data[$section])) $data[$section] = [];
 

@@ -1,14 +1,41 @@
 {
   "cdnList": [
-    { "index": 0, "name": "none/int CDN" },
-    { "index": 1, "name": "CDN 24xx" },
-    { "index": 2, "name": "CDN 44xx" },
-    { "index": 3, "name": "CDN 2802" },
-    { "index": 4, "name": "CDN 102xx" },
-    { "index": 5, "name": "CDN 104xx" },
-    { "index": 6, "name": "CDN 122xx" },
-    { "index": 7, "name": "CDN 124xx" },
-    { "index": 8, "name": "CDN 54xx" }
+    {
+      "index": 0,
+      "name": "none/int CDN"
+    },
+    {
+      "index": 1,
+      "name": "CDN 24xx"
+    },
+    {
+      "index": 2,
+      "name": "CDN 44xx"
+    },
+    {
+      "index": 3,
+      "name": "CDN 2802"
+    },
+    {
+      "index": 4,
+      "name": "CDN 102xx"
+    },
+    {
+      "index": 5,
+      "name": "CDN 104xx"
+    },
+    {
+      "index": 6,
+      "name": "CDN 122xx"
+    },
+    {
+      "index": 7,
+      "name": "CDN 124xx"
+    },
+    {
+      "index": 8,
+      "name": "CDN 54xx"
+    }
   ],
   "generators": {
     "21": {
@@ -17,46 +44,220 @@
       "type": "PG",
       "supportsCoupling": true,
       "ustep": 2.5,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Ipeak",
+          "unit": "A",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 1,   "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 10000, "default": 500 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "s", "type": "number", "min": 5,   "max": 1000,  "default": 5,   "cmd": "RepTime" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0,   "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 10000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "s",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
       ],
       "couplingNetworks": {
         "default": {
-          "name": "Kein Netzwerk", 
+          "name": "Kein Netzwerk",
           "cdnIndex": 0,
-          "coupling":  { "options": ["HV-OUT"], "default": "HV-OUT" },
-          "impedance": { "options": ["None"],   "default": "None" }
+          "coupling": {
+            "options": [
+              "HV-OUT"
+            ],
+            "default": "HV-OUT"
+          },
+          "impedance": {
+            "options": [
+              "None"
+            ],
+            "default": "None"
+          }
         },
         "CDN 102xx": {
           "name": "CDN 102xx",
           "cdnIndex": 4,
-          "coupling":  { "options": ["L->N", "L->PE", "N->PE"], "default": "L->N" },
-          "impedance": { "options": ["18µ", "9µ+10Ω"], "default": "18µ" }
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
         },
         "CDN 104xx": {
           "name": "CDN 104xx",
           "cdnIndex": 5,
-          "coupling":  { "options": ["L1->PE","L2->PE","L3->PE","N->PE","L1->L2", "L1->L3", "L1->N", "L2->L3","L2->N","L3->N"], "default": "L1->L2" },
-          "impedance": { "options": ["18µ", "9µ+10Ω"], "default": "18µ" }
-        }, 
-        "CDN 122xx": { 
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 122xx": {
           "name": "CDN 122xx",
           "cdnIndex": 6,
-          "coupling":  { "options": ["L->N", "L->PE", "N->PE"], "default": "L->N" },
-          "impedance": { "options": ["18µ", "9µ+10Ω"], "default": "18µ" }
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
         },
         "CDN 124xx": {
           "name": "CDN 124xx",
           "cdnIndex": 7,
-          "coupling":  { "options": ["L1->PE","L2->PE","L3->PE","N->PE","L1->L2", "L1->L3", "L1->N", "L2->L3","L2->N","L3->N"], "default": "L1->L2" },
-          "impedance": { "options": ["18µ", "9µ+10Ω"], "default": "18µ" }
-        } 
-      }
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        }
+      },
+      "subUnit": "CWG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        },
+        {
+          "index": 3,
+          "name": "extern CDN"
+        }
+      ]
     },
     "60": {
       "name": "IPG605",
@@ -64,14 +265,117 @@
       "type": "IPG",
       "supportsCoupling": false,
       "ustep": 1.5,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Charge",
+          "unit": "µC",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000, "default": 1,    "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 6000, "default": 500 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000, "default": 5,    "cmd": "RepTime" },
-        { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500, "default": 1500, "cmd": "IxtLimit" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,  "default": 0,    "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 6000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "ixtlimit",
+          "label": "Ixt Limit",
+          "unit": "µC",
+          "type": "number",
+          "min": 1,
+          "max": 1500,
+          "default": 1500,
+          "cmd": "IxtLimit"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "IPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        }
       ]
     },
     "61": {
@@ -80,14 +384,117 @@
       "type": "IPG",
       "supportsCoupling": false,
       "ustep": 2.5,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Charge",
+          "unit": "µC",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 1,    "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 10000, "default": 500 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000,  "default": 5,    "cmd": "RepTime" },
-        { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500,  "default": 1500, "cmd": "IxtLimit" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0,    "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 10000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "ixtlimit",
+          "label": "Ixt Limit",
+          "unit": "µC",
+          "type": "number",
+          "min": 1,
+          "max": 1500,
+          "default": 1500,
+          "cmd": "IxtLimit"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "IPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        }
       ]
     },
     "62": {
@@ -96,14 +503,117 @@
       "type": "IPG",
       "supportsCoupling": false,
       "ustep": 3,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Charge",
+          "unit": "µC",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 5,    "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 12000, "default": 12000 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000,  "default": 5,    "cmd": "RepTime" },
-        { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500,  "default": 1500, "cmd": "IxtLimit" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0,    "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 5,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 12000,
+          "default": 12000,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "ixtlimit",
+          "label": "Ixt Limit",
+          "unit": "µC",
+          "type": "number",
+          "min": 1,
+          "max": 1500,
+          "default": 1500,
+          "cmd": "IxtLimit"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "IPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        }
       ]
     },
     "63": {
@@ -112,14 +622,117 @@
       "type": "IPG",
       "supportsCoupling": false,
       "ustep": 5,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Charge",
+          "unit": "µC",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 1,    "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 20000, "default": 500 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000,  "default": 5,    "cmd": "RepTime" },
-        { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500,  "default": 1500, "cmd": "IxtLimit" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0,    "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 20000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "ixtlimit",
+          "label": "Ixt Limit",
+          "unit": "µC",
+          "type": "number",
+          "min": 1,
+          "max": 1500,
+          "default": 1500,
+          "cmd": "IxtLimit"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "IPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        }
       ]
     },
     "64": {
@@ -128,14 +741,117 @@
       "type": "IPG",
       "supportsCoupling": false,
       "ustep": 6,
-      "monitor": ["U", "Upeak", "Ipeak", "Pulse", "Rdy"],
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Charge",
+          "unit": "µC",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
       "parameters": [
-        { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 1,    "cmd": "PulsNo" },
-        { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-        { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 24000, "default": 500 },
-        { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000,  "default": 5,    "cmd": "RepTime" },
-        { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500,  "default": 1500, "cmd": "IxtLimit" },
-        { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0,    "cmd": "TDelay" }
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 24000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 5,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "ixtlimit",
+          "label": "Ixt Limit",
+          "unit": "µC",
+          "type": "number",
+          "min": 1,
+          "max": 1500,
+          "default": 1500,
+          "cmd": "IxtLimit"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "IPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        }
       ]
     }
   },
@@ -145,14 +861,99 @@
     "type": "IPG",
     "supportsCoupling": false,
     "ustep": 1,
-    "monitor": ["U", "Pulse", "Rdy"],
+    "monitor": [
+      {
+        "id": "U",
+        "label": "Spannung",
+        "unit": "V",
+        "bar": true
+      },
+      {
+        "id": "Pulse",
+        "label": "Pulse",
+        "unit": "",
+        "bar": false
+      },
+      {
+        "id": "Rdy",
+        "label": "Rdy",
+        "unit": "",
+        "bar": false
+      }
+    ],
     "parameters": [
-      { "id": "pulses",   "label": "No. of Pulses",  "unit": "",   "type": "number", "min": 1,   "max": 1000,  "default": 1 },
-      { "id": "polarity", "label": "Polarity",        "unit": "",   "type": "select", "options": ["+", "-", "+/-"], "default": "+" },
-      { "id": "voltage",  "label": "Voltage",         "unit": "V",  "type": "number", "min": 200, "max": 12000, "default": 500 },
-      { "id": "reptime",  "label": "Repetition time", "unit": "ms", "type": "number", "min": 5,   "max": 1000,  "default": 5 },
-      { "id": "ixtlimit", "label": "Ixt Limit",       "unit": "µC", "type": "number", "min": 1,   "max": 1500,  "default": 1500 },
-      { "id": "tdelay",   "label": "T-Delay",         "unit": "°",  "type": "number", "min": 0,   "max": 359,   "default": 0 }
+      {
+        "id": "pulses",
+        "label": "No. of Pulses",
+        "unit": "",
+        "type": "number",
+        "min": 1,
+        "max": 1000,
+        "default": 1
+      },
+      {
+        "id": "polarity",
+        "label": "Polarity",
+        "unit": "",
+        "type": "select",
+        "options": [
+          "+",
+          "-",
+          "+/-"
+        ],
+        "default": "+"
+      },
+      {
+        "id": "voltage",
+        "label": "Voltage",
+        "unit": "V",
+        "type": "number",
+        "min": 200,
+        "max": 12000,
+        "default": 500
+      },
+      {
+        "id": "reptime",
+        "label": "Repetition time",
+        "unit": "ms",
+        "type": "number",
+        "min": 5,
+        "max": 1000,
+        "default": 5
+      },
+      {
+        "id": "ixtlimit",
+        "label": "Ixt Limit",
+        "unit": "µC",
+        "type": "number",
+        "min": 1,
+        "max": 1500,
+        "default": 1500
+      },
+      {
+        "id": "tdelay",
+        "label": "T-Delay",
+        "unit": "°",
+        "type": "number",
+        "min": 0,
+        "max": 359,
+        "default": 0
+      }
+    ],
+    "subUnit": "IPG",
+    "vControlTabs": [
+      {
+        "index": 0,
+        "name": "Ladespannung"
+      },
+      {
+        "index": 1,
+        "name": "Upeak"
+      },
+      {
+        "index": 2,
+        "name": "Ipeak"
+      }
     ]
   }
 }

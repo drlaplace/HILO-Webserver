@@ -38,7 +38,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             cursor: pointer; color: #555; transition: background 0.15s;
             min-width: 0; white-space: nowrap;
         }
-        #voltage-panel { max-width: 1024px; }
+        #voltage-panel { max-width: 980px; }
         .tab-btn:last-child { border-right: none; }
         .tab-btn.active {
             background: #fff; color: #000; border-bottom: 2px solid #fff;
@@ -168,111 +168,36 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 </div>
 
 <div id="voltage-panel">
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab(0)">Ladespannung</button>
-        <button class="tab-btn"        onclick="switchTab(1)">Upeak</button>
-        <button class="tab-btn"        onclick="switchTab(2)">Ipeak</button>
-        <button class="tab-btn"        onclick="switchTab(3)">GPIO</button>
-    </div>
-
-    <!-- Tab 0: Ladespannung -->
-    <div class="tab-pane active" id="pane-0">
-        <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>Ladespannung</em></p>
-        <div class="panel-body">
-            <div class="left-col">
-                <button class="pol-btn" id="pol-0" onclick="togglePolarity(0)">+/-</button>
-                <div class="input-grid" id="grid-0"></div>
-                <div class="total-row">
-                    <span>Gesamt Ausgabe:</span>
-                    <input type="number" id="total-0" value="100" min="0" max="113" step="1" onblur="validateTotal(0)">
-                    <span>%</span>
-                </div>
-            </div>
-            <div class="right-col">
-                <div class="right-top">
-                    <span class="status-msg" id="status-0"></span>
-                    <button onclick="resetAll(0)">Alle Anpassungen zurücksetzen</button>
-                </div>
-                <div class="col-numbers"  id="nums-0"></div>
-                <div class="col-voltages" id="volts-0"></div>
-                <div class="slider-area"  id="sliders-0"></div>
-                <button class="btn-ok" onclick="applySettings(0)">Ok</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab 1: Upeak -->
-    <div class="tab-pane" id="pane-1">
-        <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>Upeak</em></p>
-        <div class="panel-body">
-            <div class="left-col">
-                <button class="pol-btn" id="pol-1" onclick="togglePolarity(1)">+/-</button>
-                <div class="input-grid" id="grid-1"></div>
-                <div class="total-row">
-                    <span>Gesamt Ausgabe:</span>
-                    <input type="number" id="total-1" value="100" min="0" max="113" step="1" onblur="validateTotal(1)">
-                    <span>%</span>
-                </div>
-            </div>
-            <div class="right-col">
-                <div class="right-top">
-                    <span class="status-msg" id="status-1"></span>
-                    <button onclick="resetAll(1)">Alle Anpassungen zurücksetzen</button>
-                </div>
-                <div class="col-numbers"  id="nums-1"></div>
-                <div class="col-voltages" id="volts-1"></div>
-                <div class="slider-area"  id="sliders-1"></div>
-                <button class="btn-ok" onclick="applySettings(1)">Ok</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab 2: Ipeak -->
-    <div class="tab-pane" id="pane-2">
-        <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>Ipeak</em></p>
-        <div class="panel-body">
-            <div class="left-col">
-                <button class="pol-btn" id="pol-2" onclick="togglePolarity(2)">+/-</button>
-                <div class="input-grid" id="grid-2"></div>
-                <div class="total-row">
-                    <span>Gesamt Ausgabe:</span>
-                    <input type="number" id="total-2" value="100" min="0" max="113" step="1" onblur="validateTotal(2)">
-                    <span>%</span>
-                </div>
-            </div>
-            <div class="right-col">
-                <div class="right-top">
-                    <span class="status-msg" id="status-2"></span>
-                    <button onclick="resetAll(2)">Alle Anpassungen zurücksetzen</button>
-                </div>
-                <div class="col-numbers"  id="nums-2"></div>
-                <div class="col-voltages" id="volts-2"></div>
-                <div class="slider-area"  id="sliders-2"></div>
-                <button class="btn-ok" onclick="applySettings(2)">Ok</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab 3: GPIO -->
-    <div class="tab-pane" id="pane-3">
+    <div class="tab-bar" id="tab-bar"><!-- dynamisch --></div>
+    <div id="tab-pane-container"><!-- dynamisch --></div>
+    <!-- GPIO Tab bleibt statisch -->
+    <div class="tab-pane" id="pane-gpio">
         <div id="gpio-port-container"><!-- filled by JS --></div>
-
     </div>
-</div>
 
 <script>
 // ── State pro Tab (Index 0/1/2) ───────────────────────────────────────────────
 let maxVoltage   = 12000;
 let sliderLimits = [];   // gemeinsam für alle Tabs
 
-const state = [0, 1, 2].map(() => ({
-    polarity:     1,
-    adjPos:       new Array(10).fill(0),
-    adjNeg:       new Array(10).fill(0),
-    vControllPos: 100,
-    vControllNeg: 100,
-    sections:     null   // null = Standardwerte (maxVoltage * i/10), sonst Array[10]
-}));
+let vControlTabs = [
+    { index: 0, name: "Ladespannung" },
+    { index: 1, name: "Upeak" },
+    { index: 2, name: "Ipeak" }
+]; // wird aus config.json überschrieben
+
+let state = []; // wird nach config-Load initialisiert
+
+function initState() {
+    state = vControlTabs.map(() => ({
+        polarity:     1,
+        adjPos:       new Array(10).fill(0),
+        adjNeg:       new Array(10).fill(0),
+        vControllPos: 100,
+        vControllNeg: 100,
+        sections:     null
+    }));
+}
 
 // ── Startup ───────────────────────────────────────────────────────────────────
 fetch("config.json?ts=" + Date.now())
@@ -282,11 +207,29 @@ fetch("config.json?ts=" + Date.now())
         let gen = (storedId && config.generators[storedId])
             ? config.generators[storedId]
             : config.generators[Object.keys(config.generators)[0]];
-        maxVoltage = parseInt(gen.voltage.max, 10);
+        // voltage.max aus parameters-Array lesen (neue Config-Struktur)
+        const voltParam = (gen.parameters || []).find(p => p.id === 'voltage');
+        maxVoltage = voltParam ? parseInt(voltParam.max, 10) : 12000;
         buildLimits();
-        // Erst alle INI-Daten laden, dann UI aufbauen — so sind Sections beim Aufbau bereits bekannt
-        Promise.all([0, 1, 2].map(t => loadIniData(t)))
-            .then(() => [0, 1, 2].forEach(t => buildUI(t)));
+
+        // Tabs aus Config laden
+        if (gen.vControlTabs && gen.vControlTabs.length > 0) {
+            vControlTabs = gen.vControlTabs;
+        }
+        initState();
+        buildTabBar();
+
+        // Erst alle INI-Daten laden, dann UI aufbauen
+        Promise.all(vControlTabs.map((tab, t) => loadIniData(t)))
+            .then(() => {
+                vControlTabs.forEach((tab, t) => {
+                    buildUI(t);
+                    const s = state[t];
+                    const totalInp = document.getElementById(`total-${t}`);
+                    if (totalInp) totalInp.value = s.polarity > 0 ? s.vControllPos : s.vControllNeg;
+                    showStatus(t, "Werte geladen", false);
+                });
+            });
     })
     .catch(() => {
         buildLimits();
@@ -299,15 +242,79 @@ function buildLimits() {
         sliderLimits.push(Math.round(maxVoltage * i / 10));
 }
 
+// ── Tab-Leiste dynamisch aufbauen ─────────────────────────────────────────────
+function buildTabBar() {
+    const bar = document.getElementById("tab-bar");
+    const container = document.getElementById("tab-pane-container");
+    if (!bar || !container) return;
+
+    bar.innerHTML = "";
+    container.innerHTML = "";
+
+    vControlTabs.forEach((tab, t) => {
+        // Tab-Button
+        const btn = document.createElement("button");
+        btn.className = "tab-btn" + (t === 0 ? " active" : "");
+        btn.textContent = tab.name;
+        btn.onclick = () => switchTab(t);
+        bar.appendChild(btn);
+
+        // Tab-Pane
+        const pane = document.createElement("div");
+        pane.className = "tab-pane" + (t === 0 ? " active" : "");
+        pane.id = `pane-${t}`;
+        pane.innerHTML = `
+            <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>${tab.name}</em></p>
+            <div class="panel-body">
+                <div class="left-col">
+                    <button class="pol-btn" id="pol-${t}" onclick="togglePolarity(${t})">+/-</button>
+                    <div class="input-grid" id="grid-${t}"></div>
+                    <div class="total-row">
+                        <span>Gesamt Ausgabe:</span>
+                        <input type="number" id="total-${t}" value="100" min="0" max="113" step="1"
+                            onblur="validateTotal(${t})">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="right-col">
+                    <div class="right-top">
+                        <span class="status-msg" id="status-${t}"></span>
+                        <button onclick="resetAll(${t})">Alle Anpassungen zurücksetzen</button>
+                    </div>
+                    <div class="col-numbers"  id="nums-${t}"></div>
+                    <div class="col-voltages" id="volts-${t}"></div>
+                    <div class="slider-area"  id="sliders-${t}"></div>
+                    <button class="btn-ok" onclick="applySettings(${t})">Ok</button>
+                </div>
+            </div>`;
+        container.appendChild(pane);
+    });
+
+    // GPIO Tab-Button hinzufügen
+    const gpioBtn = document.createElement("button");
+    gpioBtn.className = "tab-btn";
+    gpioBtn.textContent = "GPIO";
+    gpioBtn.onclick = () => switchTab(vControlTabs.length);
+    bar.appendChild(gpioBtn);
+}
+
 // ── Tab wechseln ──────────────────────────────────────────────────────────────
 function switchTab(t) {
-    document.querySelectorAll(".tab-pane").forEach((p, i) =>
-        p.classList.toggle("active", i === t));
+    const gpioTabIndex = vControlTabs.length; // GPIO ist immer letzter Tab
+    // Alle VControl-Panes
+    vControlTabs.forEach((tab, i) => {
+        const pane = document.getElementById(`pane-${i}`);
+        if (pane) pane.classList.toggle("active", i === t);
+    });
+    // GPIO-Pane
+    const gpioPane = document.getElementById("pane-gpio");
+    if (gpioPane) gpioPane.classList.toggle("active", t === gpioTabIndex);
+    // Tab-Buttons
     document.querySelectorAll(".tab-btn").forEach((b, i) =>
         b.classList.toggle("active", i === t));
-    // GPIO Polling starten/stoppen
-    if (t === 3) startGpioPolling();
-    else         stopGpioPolling();
+    // GPIO Polling
+    if (t === gpioTabIndex) startGpioPolling();
+    else                    stopGpioPolling();
 }
 
 // ── UI aufbauen (pro Tab) ─────────────────────────────────────────────────────
@@ -402,24 +409,33 @@ function onSectionChange(t, i) {
 }
 
 // ── INI Daten laden (nur State füllen, kein DOM) ─────────────────────────────
-function loadIniData(t) {
-    return fetch(`ini_handler.php?table=${t}&ts=` + Date.now())
-        .then(r => r.json())
+function loadIniData(t) { 
+    const url = `ini_handler.php?table=${t}&pfn=${getPfnId()}&ts=` + Date.now();
+    console.log(`[loadIniData] t=${t} url=${url} pfnId=${getPfnId()}`);
+    return fetch(url)
+        .then(r => {
+            console.log(`[loadIniData] t=${t} HTTP status=${r.status}`);
+            return r.json();
+        })
         .then(data => {
-            if (data.error) { showStatus(t, data.error, true); return; }
+            console.log(`[loadIniData] t=${t} response=`, JSON.stringify(data));
+            if (data.error) { showStatus(t, "Fehler: " + data.error, true); return; }
             const s = state[t];
             s.adjPos       = data.pos;
             s.adjNeg       = data.neg;
             s.vControllPos = data.VControll;
             s.vControllNeg = data.VControllneg;
-            // Sections in State speichern — DOM existiert noch nicht
             if (data.sections && data.sections.length === 10) {
                 s.sections = data.sections.map((v, i) => v > 0 ? v : sliderLimits[i]);
             } else {
                 s.sections = sliderLimits.slice();
             }
+            console.log(`[loadIniData] t=${t} state=`, JSON.stringify(s));
         })
-        .catch(() => showStatus(t, "INI nicht lesbar", true));
+        .catch(err => {
+            console.error(`[loadIniData] t=${t} catch:`, err);
+            showStatus(t, "INI nicht lesbar: " + err.message, true);
+        });
 }
 
 // ── INI lesen und UI aktualisieren (für manuelles Reload) ────────────────────
@@ -546,6 +562,7 @@ function applySettings(t) {
     }
     const payload = {
         table:        t,
+        pfn:          parseInt(getPfnId(), 10),
         VControll:    s.vControllPos,
         VControllneg: s.vControllNeg,
         pos:          s.adjPos,
@@ -581,6 +598,7 @@ function showStatus(t, msg, isError) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function getGenId() { return localStorage.getItem("generatorId") || "63"; }
+function getPfnId()  { return localStorage.getItem("pfnId")      || "9";  }
 
 // Alle Signale aus gpio.txt, sortiert nach Port
 const GPIO_PORTS = [
