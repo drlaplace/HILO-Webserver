@@ -15,7 +15,44 @@
         .gen-name { font-weight:bold; margin-bottom:8px; font-size:18px; }
         .btn { padding:4px 8px; margin:3px; }
         #coupling-section { display:none; }
+        .coupling-checkboxes { display:flex; flex-wrap:wrap; gap:4px 10px; margin:4px 0; }
+        .coupling-checkboxes label { font-size:13px; display:flex; align-items:center; gap:3px; cursor:pointer; }
+        .coupling-checkboxes input[type=checkbox] { cursor:pointer; }
         .monitor-row { margin:3px 0; }
+
+        #countdown-box {
+            margin-top: 8px;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #222;
+            letter-spacing: 2px;
+        }
+        #countdown-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        /* Modul-Tabs für Multi-Device */
+        #module-tab-bar {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        #module-tab-bar .btn {
+            padding: 5px 12px;
+            border: 1px solid #aaa;
+            background: #e8e8e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #module-tab-bar .btn.active,
+        #module-tab-bar .btn[style*="bold"] {
+            background: #fff;
+            border-color: #555;
+        }
     </style>
     <script src="js/script.js" defer></script>
 </head>
@@ -37,8 +74,6 @@
         <fieldset>
             <legend>Parameter</legend>
             <div id="param-fields"><!-- dynamisch --></div>
-
-            <!-- Koppelnetzwerk — nur wenn supportsCoupling=true -->
             <div id="coupling-section">
                 <hr style="margin:8px 0;">
                 <div class="param-row">
@@ -46,9 +81,9 @@
                     <select id="cdn" onchange="onCdnChange()"></select>
                     <span class="param-unit"></span>
                 </div>
-                <div class="param-row">
+                <div class="param-row" id="coupling-row">
                     <span class="param-label">Coupling:</span>
-                    <select id="coupling"></select>
+                    <div id="coupling-container"><select id="coupling"></select></div>
                     <span class="param-unit"></span>
                 </div>
                 <div class="param-row">
@@ -66,10 +101,12 @@
         <button class="btn" type="button" data-action="Stop">&#x23F9; Stop</button>
     </form>
 
-    <!-- Monitor Box — Inhalte dynamisch je nach monitor-Array -->
     <div class="monitor-box">
         <strong>Monitor:</strong><br>
         <div id="monitor-fields"><!-- dynamisch --></div>
+        <!-- Countdown -->
+        <div id="countdown-label">Rep. Time</div>
+        <div id="countdown-box">00:00</div>
     </div>
 
     <div id="eval-box" style="border:1px solid #ccc;padding:10px;width:200px;text-align:center;font-size:24px;font-weight:bold;background:#f9f9f9;">

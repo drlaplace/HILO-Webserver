@@ -38,6 +38,488 @@
     }
   ],
   "generators": {
+    "101": {
+      "name": "EFTG",
+      "pfnId": 2,
+      "type": "CE",
+      "supportsCoupling": true,
+      "ustep": 1.25,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "frequency",
+          "label": "Frequency",
+          "unit": "kHz",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 1,
+          "cmd": "Frequency"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 5000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "duration",
+          "label": "Duration",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.01,
+          "max": 75,
+          "default": 15,
+          "cmd": "Duration"
+        },
+        {
+          "id": "period",
+          "label": "Period",
+          "unit": "ms",
+          "type": "number",
+          "min": 10,
+          "max": 1000,
+          "default": 300,
+          "cmd": "Period"
+        },
+        {
+          "id": "testtime",
+          "label": "Testtime",
+          "unit": "s",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 120,
+          "cmd": "TestTime"
+        }
+      ],
+      "couplingNetworks": {
+        "default": {
+          "name": "int CDN",
+          "cdnIndex": 0,
+          "couplingType": "bitmask",
+          "coupling": {
+            "lines": [
+              "L1",
+              "N",
+              "PE",
+              "HV-OUT"
+            ],
+            "bits": [
+              1024,
+              4,
+              2,
+              1
+            ],
+            "default": [
+              "HV-OUT"
+            ]
+          },
+          "impedance": {
+            "options": [
+              "3nF"
+            ],
+            "default": "3nF"
+          }
+        },
+        "CDN 102xx": {
+          "name": "CDN 102xx",
+          "cdnIndex": 4,
+          "couplingType": "bitmask",
+          "coupling": {
+            "lines": [
+              "L1",
+              "N",
+              "PE",
+              "HV-OUT"
+            ],
+            "bits": [
+              1024,
+              4,
+              2,
+              1
+            ],
+            "default": [
+              "L1"
+            ]
+          },
+          "impedance": {
+            "options": [
+              "3nF"
+            ],
+            "default": "3nF"
+          }
+        },
+        "CDN 104xx": {
+          "name": "CDN 104xx",
+          "cdnIndex": 5,
+          "couplingType": "bitmask",
+          "coupling": {
+            "lines": [
+              "L1",
+              "L2",
+              "L3",
+              "L4",
+              "N",
+              "PE"
+            ],
+            "bits": [
+              1024,
+              512,
+              256,
+              128,
+              4,
+              2
+            ],
+            "default": [
+              "L1"
+            ]
+          },
+          "impedance": {
+            "options": [
+              "3nF"
+            ],
+            "default": "3nF"
+          }
+        },
+        "CDN 54xx": {
+          "name": "CDN 54/74xx",
+          "cdnIndex": 8,
+          "couplingType": "bitmask",
+          "coupling": {
+            "lines": [
+              "L1",
+              "L2",
+              "L3",
+              "L4",
+              "N",
+              "PE",
+              "HV-OUT"
+            ],
+            "bits": [
+              1024,
+              512,
+              256,
+              128,
+              4,
+              2,
+              1
+            ],
+            "default": [
+              "L1"
+            ]
+          },
+          "impedance": {
+            "options": [
+              "3nF"
+            ],
+            "default": "3nF"
+          }
+        }
+      },
+      "subUnit": "EFT",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "int CDN"
+        },
+        {
+          "index": 2,
+          "name": "ext CDN"
+        }
+      ],
+      "countdownParam": "testtime"
+    },
+    "102": {
+      "name": "CWG 5",
+      "pfnId": 3,
+      "type": "CE",
+      "supportsCoupling": true,
+      "ustep": 1.25,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Ipeak",
+          "unit": "A",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 5000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "s",
+          "type": "number",
+          "min": 20,
+          "max": 1000,
+          "default": 20,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "couplingNetworks": {
+        "default": {
+          "name": "int CDN",
+          "cdnIndex": 0,
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE",
+              "HV-OUT"
+            ],
+            "default": "HV-OUT"
+          },
+          "impedance": {
+            "options": [
+              "None",
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "None"
+          }
+        },
+        "CDN 102xx": {
+          "name": "CDN 102xx",
+          "cdnIndex": 4,
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 104xx": {
+          "name": "CDN 104xx",
+          "cdnIndex": 5,
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 122xx": {
+          "name": "CDN 122xx",
+          "cdnIndex": 6,
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 124xx": {
+          "name": "CDN 124xx",
+          "cdnIndex": 7,
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 54xx": {
+          "name": "CDN 54xx",
+          "cdnIndex": 8,
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        }
+      },
+      "subUnit": "CWG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "int CDN"
+        },
+        {
+          "index": 2,
+          "name": "ext CDN"
+        },
+        {
+          "index": 3,
+          "name": "Upeak"
+        },
+        {
+          "index": 4,
+          "name": "Ipeak"
+        }
+      ]
+    },
     "21": {
       "name": "PG10-504",
       "pfnId": 3,
@@ -115,9 +597,9 @@
           "label": "Repetition time",
           "unit": "s",
           "type": "number",
-          "min": 5,
+          "min": 20,
           "max": 1000,
-          "default": 5,
+          "default": 20,
           "cmd": "RepTime"
         },
         {
@@ -256,6 +738,417 @@
         {
           "index": 3,
           "name": "extern CDN"
+        }
+      ]
+    },
+    "22": {
+      "name": "PG12-804",
+      "pfnId": 3,
+      "type": "PG",
+      "supportsCoupling": true,
+      "ustep": 3.0,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Upeak",
+          "label": "Upeak",
+          "unit": "V",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Ipeak",
+          "unit": "A",
+          "bar": false
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 12000,
+          "default": 500,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "s",
+          "type": "number",
+          "min": 20,
+          "max": 1000,
+          "default": 20,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "couplingNetworks": {
+        "default": {
+          "name": "Kein Netzwerk",
+          "cdnIndex": 0,
+          "coupling": {
+            "options": [
+              "HV-OUT"
+            ],
+            "default": "HV-OUT"
+          },
+          "impedance": {
+            "options": [
+              "None"
+            ],
+            "default": "None"
+          }
+        },
+        "CDN 102xx": {
+          "name": "CDN 102xx",
+          "cdnIndex": 4,
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 104xx": {
+          "name": "CDN 104xx",
+          "cdnIndex": 5,
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 122xx": {
+          "name": "CDN 122xx",
+          "cdnIndex": 6,
+          "coupling": {
+            "options": [
+              "L->N",
+              "L->PE",
+              "N->PE"
+            ],
+            "default": "L->N"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        },
+        "CDN 124xx": {
+          "name": "CDN 124xx",
+          "cdnIndex": 7,
+          "coupling": {
+            "options": [
+              "L1->PE",
+              "L2->PE",
+              "L3->PE",
+              "N->PE",
+              "L1->L2",
+              "L1->L3",
+              "L1->N",
+              "L2->L3",
+              "L2->N",
+              "L3->N"
+            ],
+            "default": "L1->L2"
+          },
+          "impedance": {
+            "options": [
+              "18µ",
+              "9µ+10Ω"
+            ],
+            "default": "18µ"
+          }
+        }
+      },
+      "subUnit": "CWG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Upeak"
+        },
+        {
+          "index": 2,
+          "name": "Ipeak"
+        },
+        {
+          "index": 3,
+          "name": "extern CDN"
+        }
+      ]
+    },
+    "23": {
+      "name": "PG6-200",
+      "pfnId": 3,
+      "type": "PG",
+      "supportsCoupling": false,
+      "ustep": 1.5625,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Ipeak",
+          "label": "Ipeak",
+          "unit": "A",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Error",
+          "label": "Error",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 6250,
+          "default": 1000,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "s",
+          "type": "number",
+          "min": 20,
+          "max": 1000,
+          "default": 20,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "CWG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        }
+      ]
+    },
+    "39": {
+      "name": "HCC30-60",
+      "pfnId": 3,
+      "type": "PG",
+      "supportsCoupling": false,
+      "ustep": 7.5,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 1000,
+          "max": 30000,
+          "default": 1000,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "s",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 40,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "tdelay",
+          "label": "T-Delay",
+          "unit": "°",
+          "type": "number",
+          "min": 0,
+          "max": 359,
+          "default": 0,
+          "cmd": "TDelay"
+        }
+      ],
+      "subUnit": "CWG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
         }
       ]
     },
@@ -955,5 +1848,128 @@
         "name": "Ipeak"
       }
     ]
+  },
+  "errorCodes": {
+    "0": "Kein Fehler",
+    "1": "Safety interlock loop open!",
+    "2": "False signal GE",
+    "3": "No RDY-signal received",
+    "4": "Attention! Residual voltage. Turn off the generator",
+    "5": "Connection lost. Turn off the generator",
+    "6": "I > Imax. Overcurrent detection (AC-Tester)",
+    "7": "Overload I >> 100mA (AC-Tester)",
+    "8": "Overheat (AC-Tester)"
+  },
+  "multiDevices": {
+    "1": {
+      "name": "Multi-CE5",
+      "generatorId": 1,
+      "modules": [
+        {
+          "bit": 1,
+          "pfnId": 2,
+          "label": "EFT/Burst",
+          "generatorRef": "101",
+          "enabled": false
+        },
+        {
+          "bit": 2,
+          "pfnId": 3,
+          "label": "Surge/CWG",
+          "generatorRef": "102",
+          "enabled": true
+        },
+        {
+          "bit": 4,
+          "pfnId": 4,
+          "label": "PFS",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 8,
+          "pfnId": 5,
+          "label": "PMag",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 16,
+          "pfnId": 6,
+          "label": "Mag50",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 32,
+          "pfnId": 8,
+          "label": "RW",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 64,
+          "pfnId": 13,
+          "label": "TSurge",
+          "generatorRef": "30",
+          "enabled": false
+        }
+      ]
+    },
+    "2": {
+      "name": "Multi-CE7",
+      "generatorId": 2,
+      "modules": [
+        {
+          "bit": 1,
+          "pfnId": 2,
+          "label": "EFT/Burst",
+          "generatorRef": "101",
+          "enabled": true
+        },
+        {
+          "bit": 2,
+          "pfnId": 3,
+          "label": "Surge/CWG",
+          "generatorRef": "102",
+          "enabled": true
+        },
+        {
+          "bit": 4,
+          "pfnId": 4,
+          "label": "PFS",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 8,
+          "pfnId": 5,
+          "label": "PMag",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 16,
+          "pfnId": 6,
+          "label": "Mag50",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 32,
+          "pfnId": 8,
+          "label": "RW",
+          "generatorRef": "30",
+          "enabled": false
+        },
+        {
+          "bit": 64,
+          "pfnId": 13,
+          "label": "TSurge",
+          "generatorRef": "30",
+          "enabled": false
+        }
+      ]
+    }
   }
 }

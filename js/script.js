@@ -3,8 +3,12 @@ let generatorName   = "Unbekannt";
 let monitorInterval = null;
 let ustep           = 1;
 let maxVoltage      = 12000;
+let sliderLimits    = [];     // sliderLimits[i] = (i+1)/10 * maxVoltage
+let pulses          = 0;
 let genConfig       = null;
 let globalConfig    = null;   // komplette config.json (für cdnList)
+let isMultiDevice   = false;  // Kombigerät-Modus
+let activeModuleIdx = 0;      // aktiver Modul-Tab-Index
 let debugMode       = true;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -41,6 +45,7 @@ function init() {
         }
 
         loadDefaults();
+
     });
 }
 
@@ -50,12 +55,25 @@ function loadDefaults() {
         .then(res => res.json())
         .then(config => {
             globalConfig  = config;
+            localStorage.setItem("generatorId", generatorId);
+
+            // Multi-Device Modus prüfen (generatorId 1 oder 2 → immer Multi)
+            const md = config.multiDevices && config.multiDevices[String(generatorId)];
+            if (md) {
+                isMultiDevice = true;
+                document.getElementById("gen-name").textContent = md.name;
+                buildModuleTabs(md, config);
+                // Ersten enabled Tab aktivieren
+                const firstIdx = md.modules.findIndex(m => m.enabled);
+                loadModule(md, config, firstIdx >= 0 ? firstIdx : 0);
+                return;
+            }
+
+            // Einzelgerät
+            isMultiDevice = false;
             genConfig     = config.generators[String(generatorId)] || config.fallback;
             generatorName = genConfig.name || "Unbekannt";
-
-            localStorage.setItem("generatorId", generatorId);
             localStorage.setItem("pfnId", genConfig.pfnId || 9);
-
             document.getElementById("gen-name").textContent = generatorName;
             ustep      = parseFloat(genConfig.ustep);
             maxVoltage = (getParamCfg("voltage") || {}).max || 12000;
@@ -116,6 +134,16 @@ function buildParamFields(parameters) {
         row.appendChild(unitEl);
         container.appendChild(row);
     });
+
+    // Countdown-Anzeige initialisieren (reptime oder testtime)
+    const cdParamId = (genConfig && genConfig.countdownParam) || "reptime";
+    const cdInitEl  = document.getElementById(cdParamId);
+    if (cdInitEl) {
+        const el = document.getElementById("countdown-box");
+        if (el) el.textContent = String(Math.ceil(parseFloat(cdInitEl.value) || 0));
+        const lbl = document.getElementById("countdown-label");
+        if (lbl) lbl.textContent = cdParamId === "testtime" ? "Test Time" : "Rep. Time";
+    }
 }
 
 // ── Monitor-Felder aufbauen — aus Config-Objekten {id, label, unit, bar} ─────
@@ -178,8 +206,62 @@ function applyCouplingNetwork(networkKey) {
     const networks = genConfig.couplingNetworks || {};
     const net      = networks[networkKey] || networks["default"] || null;
     if (!net) return;
-    fillSelect("coupling",  (net.coupling  || {}).options || [], (net.coupling  || {}).default || "");
+
+    if (net.couplingType === "bitmask") {
+        buildCouplingCheckboxes(net.coupling);
+    } else {
+        // Standard Select
+        const container = document.getElementById("coupling-container");
+        if (container) {
+            container.innerHTML = '<select id="coupling"></select>';
+        }
+        fillSelect("coupling", (net.coupling || {}).options || [], (net.coupling || {}).default || "");
+    }
     fillSelect("impedance", (net.impedance || {}).options || [], (net.impedance || {}).default || "");
+}
+
+function buildCouplingCheckboxes(couplingCfg) {
+    const container = document.getElementById("coupling-container");
+    if (!container) return;
+    const lines    = couplingCfg.lines   || [];
+    const defaults = couplingCfg.default || [];
+    const div = document.createElement("div");
+    div.className = "coupling-checkboxes";
+    div.id = "coupling-checkboxes";
+    lines.forEach((line, idx) => {
+        const lbl = document.createElement("label");
+        const cb  = document.createElement("input");
+        cb.type   = "checkbox";
+        cb.value  = line;
+        cb.id     = `coupling-cb-${line}`;
+        cb.checked = defaults.includes(line);
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(line));
+        div.appendChild(lbl);
+    });
+    container.innerHTML = "";
+    container.appendChild(div);
+}
+
+function getEftCouplingValue() {
+    // Berechne Bitwert aus aktivierten Checkboxen
+    const net = (() => {
+        const networks = genConfig.couplingNetworks || {};
+        const cdnEl = document.getElementById("cdn");
+        if (!cdnEl) return networks["default"] || null;
+        const cdnIdx = parseInt(cdnEl.value, 10);
+        return Object.values(networks).find(n => n.cdnIndex === cdnIdx) || networks["default"];
+    })();
+    if (!net || net.couplingType !== "bitmask") return null;
+
+    const lines = (net.coupling || {}).lines || [];
+    const bits  = (net.coupling || {}).bits  || [];
+    let value = 0;
+    lines.forEach((line, i) => {
+        const cb = document.getElementById(`coupling-cb-${line}`);
+        if (cb && cb.checked) value += (bits[i] || 0);
+    });
+    return value;
 }
 
 function fillSelect(id, options, defaultVal) {
@@ -258,7 +340,7 @@ function handleAction(action) {
     if (action === "Start") {
         const subUnit = genConfig ? (genConfig.subUnit || genConfig.type || "IPG") : "IPG";
         const polMap  = { "+": 0, "-": 1, "+/-": 2 };
-
+        pulses = 0; // Reset pulses count on start
         genConfig.parameters.forEach(p => {
             const el = document.getElementById(p.id);
             if (!el) return;
@@ -270,11 +352,21 @@ function handleAction(action) {
 
         if (genConfig.supportsCoupling) {
             const cdnEl       = document.getElementById("cdn");
-            const couplingEl  = document.getElementById("coupling");
             const impedanceEl = document.getElementById("impedance");
-            if (cdnEl)        sendCommand(`${generatorId}:Parameter:${subUnit}:CDN:${cdnEl.value}`);
-            if (couplingEl)   sendCommand(`${generatorId}:Parameter:${subUnit}:Coupling:${cwgCouplingValue(couplingEl.value)}`);
-            if (impedanceEl)  sendCommand(`${generatorId}:Parameter:${subUnit}:Impedance:${cwgImpedanceValue(impedanceEl.value)}`);
+            if (cdnEl) sendCommand(`${generatorId}:Parameter:${subUnit}:CDN:${cdnEl.value}`);
+
+            // Coupling: bitmask (EFT) oder CWG-Codierung
+            const networks  = genConfig.couplingNetworks || {};
+            const cdnIdx    = cdnEl ? parseInt(cdnEl.value, 10) : 0;
+            const activeNet = Object.values(networks).find(n => n.cdnIndex === cdnIdx) || networks["default"];
+            if (activeNet && activeNet.couplingType === "bitmask") {
+                const bitVal = getEftCouplingValue();
+                if (bitVal !== null) sendCommand(`${generatorId}:Parameter:${subUnit}:Coupling:${bitVal}`);
+            } else {
+                const couplingEl = document.getElementById("coupling");
+                if (couplingEl) sendCommand(`${generatorId}:Parameter:${subUnit}:Coupling:${cwgCouplingValue(couplingEl.value)}`);
+            }
+            if (impedanceEl) sendCommand(`${generatorId}:Parameter:${subUnit}:Impedance:${cwgImpedanceValue(impedanceEl.value)}`);
         }
 
         startMonitoring();
@@ -304,10 +396,19 @@ function startMonitoring() {
     if (monitorInterval) clearInterval(monitorInterval);
     monitorInterval = setInterval(fetchMonitorValues, 20);
     fetchMonitorValues();
+    // Countdown starten — reptime oder testtime je nach Generator
+    const cdParam   = (genConfig && genConfig.countdownParam) || "reptime";
+    const cdEl      = document.getElementById(cdParam);
+    const cdSeconds = cdEl ? (parseFloat(cdEl.value) || 0) : 0;
+    const cdRepeat  = cdParam !== "testtime";
+    startCountdown(cdSeconds, cdRepeat);
+    const cdLabel = document.getElementById("countdown-label");
+    if (cdLabel) cdLabel.textContent = cdParam === "testtime" ? "Test Time" : "Rep. Time";
 }
 
 function stopMonitoring() {
     if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
+    stopCountdown();
 }
 
 function fetchMonitorValues() {
@@ -363,8 +464,16 @@ function fetchMonitorValues() {
             }
         }
 
-        // Auto-Stop
+        //Rep Time wieder zurücksetzen, falls Pulszahl erhöht wurde
         const pulsesEl = document.getElementById("pulses");
+        if (pulsesEl && "Pulse" in monitorData){
+            if (monitorData["Pulse"] > pulses) {
+                console.log("Pulses increased, resetting countdown to reptime", monitorData["Pulse"], pulses);
+                startCountdown(parseFloat(document.getElementById("reptime").value) || 0);
+                pulses = monitorData["Pulse"];
+            }
+        }
+        // Auto-Stop
         if (pulsesEl && "Pulse" in monitorData && "Rdy" in monitorData) {
             if (monitorData["Pulse"] >= parseInt(pulsesEl.value, 10) && monitorData["Rdy"] === 1) {
                 sendCommand(`${generatorId}:Control:Stop`).then(showOutput);
@@ -372,6 +481,124 @@ function fetchMonitorValues() {
             }
         }
     });
+}
+
+
+// ── Countdown-Timer ───────────────────────────────────────────────────────────
+let countdownInterval = null;
+let countdownValue    = 0;
+
+function updateCountdownDisplay(totalSeconds) {
+    if (totalSeconds < 0) totalSeconds = 0;
+    const seconds = Math.ceil(totalSeconds);
+    const el = document.getElementById("countdown-box");
+    if (el) el.textContent = String(seconds).padStart(1,'0');
+}
+
+let countdownRepeat  = true;
+let countdownSeconds = 0;
+
+function startCountdown(seconds, repeat = true) {
+    stopCountdown();
+    countdownRepeat  = repeat;
+    countdownSeconds = seconds;
+    countdownValue   = seconds;
+    updateCountdownDisplay(countdownValue);
+    countdownInterval = setInterval(() => {
+        countdownValue -= 0.1;
+        if (countdownValue <= 0) {
+            if (countdownRepeat) {
+                countdownValue = countdownSeconds;
+            } else {
+                countdownValue = 0;
+                updateCountdownDisplay(0);
+                stopCountdown();
+                // Control:Stop nur bei testtime-Modus
+                if (generatorId) sendCommand(`${generatorId}:Control:Stop`).then(showOutput);
+                stopMonitoring();
+                return;
+            }
+        }
+        updateCountdownDisplay(countdownValue);
+    }, 100);
+}
+
+function resetCountdown(seconds) {
+    if (!countdownRepeat) return; // nur bei reptime-Modus
+    countdownValue = seconds;
+    updateCountdownDisplay(countdownValue);
+}
+
+function stopCountdown() {
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+    updateCountdownDisplay(0);
+}
+
+// ── Slider-Limits berechnen ──────────────────────────────────────────────────
+function buildLimits() {
+    sliderLimits = [];
+    for (let i = 1; i <= 10; i++)
+        sliderLimits.push(Math.round(maxVoltage * i / 10));
+}
+
+// ── Multi-Device: Modul-Tabs aufbauen ────────────────────────────────────────
+function buildModuleTabs(md, config) {
+    let tabBar = document.getElementById("module-tab-bar");
+    if (!tabBar) {
+        tabBar = document.createElement("div");
+        tabBar.id = "module-tab-bar";
+        tabBar.style.cssText = "display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;";
+        const genName = document.getElementById("gen-name");
+        genName.parentNode.insertBefore(tabBar, genName.nextSibling);
+    }
+    tabBar.innerHTML = "";
+    md.modules.forEach((mod, idx) => {
+        if (!mod.enabled) return; // nur enabled Module anzeigen
+        const btn = document.createElement("button");
+        btn.id = `module-tab-btn-${idx}`;
+        btn.className = "btn";
+        btn.textContent = mod.label;
+        btn.onclick = () => loadModule(md, globalConfig, idx);
+        tabBar.appendChild(btn);
+    });
+}
+
+function loadModule(md, config, idx) {
+    activeModuleIdx = idx;
+    const mod = md.modules[idx];
+
+    // Tab-Buttons hervorheben
+    md.modules.forEach((_, i) => {
+        const btn = document.getElementById(`module-tab-btn-${i}`);
+        if (btn) {
+            btn.classList.toggle("active", i === idx);
+        }
+    });
+
+    // genConfig + pfnId auf Modul setzen
+    genConfig = config.generators[mod.generatorRef] || config.fallback;
+    localStorage.setItem("pfnId", mod.pfnId);
+    document.getElementById("gen-name").textContent = `${md.name} — ${mod.label}`;
+
+    // ustep + maxVoltage
+    ustep = parseFloat(genConfig.ustep) || 1;
+    const voltParam = (genConfig.parameters || []).find(p => p.id === "voltage");
+    maxVoltage = voltParam ? parseInt(voltParam.max, 10) : 12000;
+    buildLimits();
+
+    // UI neu aufbauen
+    buildParamFields(genConfig.parameters || []);
+    buildMonitorFields(genConfig.monitor || []);
+
+    // Coupling
+    const couplingSection = document.getElementById("coupling-section");
+    if (genConfig.supportsCoupling) {
+        couplingSection.style.display = "block";
+        buildCdnSelect();
+        applyCouplingNetwork("default");
+    } else {
+        couplingSection.style.display = "none";
+    }
 }
 
 // ── Validierung ───────────────────────────────────────────────────────────────
