@@ -1870,7 +1870,7 @@
           "pfnId": 2,
           "label": "EFT/Burst",
           "generatorRef": "101",
-          "enabled": false
+          "enabled": true
         },
         {
           "bit": 2,

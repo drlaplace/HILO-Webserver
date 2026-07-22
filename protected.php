@@ -38,7 +38,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             cursor: pointer; color: #555; transition: background 0.15s;
             min-width: 0; white-space: nowrap;
         }
-        #voltage-panel { max-width: 980px; }
+        #voltage-panel { max-width: 1000px; }
         .tab-btn:last-child { border-right: none; }
         .tab-btn.active {
             background: #fff; color: #000; border-bottom: 2px solid #fff;
@@ -187,6 +187,9 @@ let vControlTabs = [
 ]; // wird aus config.json überschrieben
 
 let state = []; // wird nach config-Load initialisiert
+let multiDeviceDef  = null;  // aktuelle multiDevice-Definition
+let activeModuleRef = null;  // generatorRef des aktiven Moduls
+let globalConfig    = null;  // komplette config.json global verfügbar
 
 function initState() {
     state = vControlTabs.map(() => ({
@@ -203,33 +206,27 @@ function initState() {
 fetch("config.json?ts=" + Date.now())
     .then(r => r.json())
     .then(config => {
+        globalConfig = config;  // global speichern
         const storedId = localStorage.getItem("generatorId");
+
+        // Multi-Device prüfen
+        const md = config.multiDevices && config.multiDevices[String(storedId)];
+        if (md) {
+            multiDeviceDef = md;
+            buildModuleTabBar(md);
+            // Ersten enabled Modul laden
+            const firstEnabledIdx = md.modules.findIndex(m => m.enabled);
+            if (firstEnabledIdx >= 0)
+                loadModuleConfig(md.modules[firstEnabledIdx].generatorRef, firstEnabledIdx);
+            return;
+        }
+
+        // Einzelgerät
         let gen = (storedId && config.generators[storedId])
             ? config.generators[storedId]
             : config.generators[Object.keys(config.generators)[0]];
-        // voltage.max aus parameters-Array lesen (neue Config-Struktur)
-        const voltParam = (gen.parameters || []).find(p => p.id === 'voltage');
-        maxVoltage = voltParam ? parseInt(voltParam.max, 10) : 12000;
-        buildLimits();
 
-        // Tabs aus Config laden
-        if (gen.vControlTabs && gen.vControlTabs.length > 0) {
-            vControlTabs = gen.vControlTabs;
-        }
-        initState();
-        buildTabBar();
-
-        // Erst alle INI-Daten laden, dann UI aufbauen
-        Promise.all(vControlTabs.map((tab, t) => loadIniData(t)))
-            .then(() => {
-                vControlTabs.forEach((tab, t) => {
-                    buildUI(t);
-                    const s = state[t];
-                    const totalInp = document.getElementById(`total-${t}`);
-                    if (totalInp) totalInp.value = s.polarity > 0 ? s.vControllPos : s.vControllNeg;
-                    showStatus(t, "Werte geladen", false);
-                });
-            });
+        loadGenConfig(gen);
     })
     .catch(() => {
         buildLimits();
@@ -242,17 +239,135 @@ function buildLimits() {
         sliderLimits.push(Math.round(maxVoltage * i / 10));
 }
 
+// ── Einzelnen Generator laden (Einzelgerät oder nach Modul-Auswahl) ───────────
+function loadGenConfig(gen) {
+    const voltParam = (gen.parameters || []).find(p => p.id === 'voltage');
+    maxVoltage = voltParam ? parseInt(voltParam.max, 10) : 12000;
+    buildLimits();
+    if (gen.vControlTabs && gen.vControlTabs.length > 0) {
+        vControlTabs = gen.vControlTabs;
+    }
+    initState();
+    buildTabBar();
+    Promise.all(vControlTabs.map((tab, t) => loadIniData(t)))
+        .then(() => {
+            vControlTabs.forEach((tab, t) => {
+                buildUI(t);
+                const s = state[t];
+                const totalInp = document.getElementById(`total-${t}`);
+                if (totalInp) totalInp.value = s.polarity > 0 ? s.vControllPos : s.vControllNeg;
+                showStatus(t, "Werte geladen", false);
+            });
+        });
+}
+
+// ── Multi-Device: Modul-Tab-Leiste aufbauen ───────────────────────────────────
+function buildModuleTabBar(md) {
+    const bar = document.getElementById("tab-bar");
+    if (!bar) return;
+    bar.innerHTML = "";
+
+    // Modul-Buttons (nur enabled)
+    md.modules.forEach((mod, idx) => {
+        if (!mod.enabled) return;
+        const btn = document.createElement("button");
+        btn.className = "tab-btn";
+        btn.id = `mod-btn-${idx}`;
+        btn.textContent = mod.label;
+        btn.onclick = () => loadModuleConfig(mod.generatorRef, idx);
+        bar.appendChild(btn);
+    });
+
+    // GPIO-Button immer am Ende
+    const gpioBtn = document.createElement("button");
+    gpioBtn.className = "tab-btn";
+    gpioBtn.textContent = "GPIO";
+    gpioBtn.onclick = () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        gpioBtn.classList.add("active");
+        const container = document.getElementById("tab-pane-container");
+        if (container) container.style.display = "none";
+        document.getElementById("pane-gpio").classList.add("active");
+        startGpioPolling();
+    };
+    bar.appendChild(gpioBtn);
+}
+
+// ── Multi-Device: Modul aktivieren ────────────────────────────────────────────
+function loadModuleConfig(generatorRef, activeIdx) {
+    activeModuleRef = generatorRef;
+    stopGpioPolling();
+
+    // pfnId aus multiDeviceDef setzen
+    const mod = multiDeviceDef.modules.find(m => m.generatorRef === generatorRef);
+    if (mod) localStorage.setItem("pfnId", mod.pfnId);
+
+    // Modul-Tab hervorheben
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    const activeBtn = document.getElementById(`mod-btn-${activeIdx}`);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    // pane-gpio ausblenden, pane-container einblenden
+    const gpioPane = document.getElementById("pane-gpio");
+    if (gpioPane) gpioPane.classList.remove("active");
+    const container = document.getElementById("tab-pane-container");
+    if (container) container.style.display = "";
+
+    // Generator-Config aus globalConfig laden
+    const gen = globalConfig.generators[generatorRef];
+    if (gen) loadGenConfig(gen);
+}
+
 // ── Tab-Leiste dynamisch aufbauen ─────────────────────────────────────────────
 function buildTabBar() {
     const bar = document.getElementById("tab-bar");
     const container = document.getElementById("tab-pane-container");
     if (!bar || !container) return;
 
-    bar.innerHTML = "";
+    // Bei Multi-Device: Modul-Buttons in tab-bar behalten, nur vControl-Tabs
+    // in einem zweiten Sub-Tab-Bar anzeigen
     container.innerHTML = "";
 
+    if (!multiDeviceDef) {
+        // Einzelgerät: tab-bar komplett neu aufbauen
+        bar.innerHTML = "";
+    } else {
+        // Multi-Device: Sub-Tab-Bar für vControlTabs unter dem Modul-Inhalt
+        // Tab-Bar bleibt mit Modul-Buttons, wir fügen Sub-Tabs in container ein
+        const subBar = document.createElement("div");
+        subBar.id = "sub-tab-bar";
+        subBar.style.cssText = "display:flex;gap:2px;margin-bottom:8px;border-bottom:1px solid #aaa;";
+        container.appendChild(subBar);
+
+        vControlTabs.forEach((tab, t) => {
+            const btn = document.createElement("button");
+            btn.className = "tab-btn" + (t === 0 ? " active" : "");
+            btn.style.cssText = "font-size:12px;padding:4px 10px;";
+            btn.textContent = tab.name;
+            btn.onclick = () => switchTab(t);
+            subBar.appendChild(btn);
+        });
+
+        // GPIO-Tab in sub-bar
+        //const gpioBtn = document.createElement("button");
+        //gpioBtn.className = "tab-btn";
+        //gpioBtn.style.cssText = "font-size:12px;padding:4px 10px;";
+        //gpioBtn.textContent = "GPIO";
+        //gpioBtn.onclick = () => switchTab(vControlTabs.length);
+        //subBar.appendChild(gpioBtn);
+
+        vControlTabs.forEach((tab, t) => {
+            const pane = document.createElement("div");
+            pane.className = "tab-pane" + (t === 0 ? " active" : "");
+            pane.id = `pane-${t}`;
+            pane.innerHTML = buildPaneHTML(tab, t);
+            container.appendChild(pane);
+        });
+        return; // früh raus — Panes schon gebaut
+    }
+
     vControlTabs.forEach((tab, t) => {
-        // Tab-Button
+        // Tab-Button (nur Einzelgerät)
         const btn = document.createElement("button");
         btn.className = "tab-btn" + (t === 0 ? " active" : "");
         btn.textContent = tab.name;
@@ -263,34 +378,11 @@ function buildTabBar() {
         const pane = document.createElement("div");
         pane.className = "tab-pane" + (t === 0 ? " active" : "");
         pane.id = `pane-${t}`;
-        pane.innerHTML = `
-            <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>${tab.name}</em></p>
-            <div class="panel-body">
-                <div class="left-col">
-                    <button class="pol-btn" id="pol-${t}" onclick="togglePolarity(${t})">+/-</button>
-                    <div class="input-grid" id="grid-${t}"></div>
-                    <div class="total-row">
-                        <span>Gesamt Ausgabe:</span>
-                        <input type="number" id="total-${t}" value="100" min="0" max="113" step="1"
-                            onblur="validateTotal(${t})">
-                        <span>%</span>
-                    </div>
-                </div>
-                <div class="right-col">
-                    <div class="right-top">
-                        <span class="status-msg" id="status-${t}"></span>
-                        <button onclick="resetAll(${t})">Alle Anpassungen zurücksetzen</button>
-                    </div>
-                    <div class="col-numbers"  id="nums-${t}"></div>
-                    <div class="col-voltages" id="volts-${t}"></div>
-                    <div class="slider-area"  id="sliders-${t}"></div>
-                    <button class="btn-ok" onclick="applySettings(${t})">Ok</button>
-                </div>
-            </div>`;
+        pane.innerHTML = buildPaneHTML(tab, t);
         container.appendChild(pane);
     });
 
-    // GPIO Tab-Button hinzufügen
+    // GPIO Tab-Button hinzufügen (nur Einzelgerät)
     const gpioBtn = document.createElement("button");
     gpioBtn.className = "tab-btn";
     gpioBtn.textContent = "GPIO";
@@ -298,9 +390,39 @@ function buildTabBar() {
     bar.appendChild(gpioBtn);
 }
 
+function buildPaneHTML(tab, t) {
+    return `
+        <p class="panel-title">SW Anpassung der Ausgangsspannung &mdash; <em>${tab.name}</em></p>
+        <div class="panel-body">
+            <div class="left-col">
+                <button class="pol-btn" id="pol-${t}" onclick="togglePolarity(${t})">+/-</button>
+                <div class="input-grid" id="grid-${t}"></div>
+                <div class="total-row">
+                    <span>Gesamt Ausgabe:</span>
+                    <input type="number" id="total-${t}" value="100" min="0" max="113" step="1"
+                        onblur="validateTotal(${t})">
+                    <span>%</span>
+                </div>
+            </div>
+            <div class="right-col">
+                <div class="right-top">
+                    <span class="status-msg" id="status-${t}"></span>
+                    <button onclick="resetAll(${t})">Alle Anpassungen zurücksetzen</button>
+                </div>
+                <div class="col-numbers"  id="nums-${t}"></div>
+                <div class="col-voltages" id="volts-${t}"></div>
+                <div class="slider-area"  id="sliders-${t}"></div>
+                <button class="btn-ok" onclick="applySettings(${t})">Ok</button>
+            </div>
+        </div>`;
+}
+
 // ── Tab wechseln ──────────────────────────────────────────────────────────────
 function switchTab(t) {
     const gpioTabIndex = vControlTabs.length; // GPIO ist immer letzter Tab
+    // tab-pane-container sichtbar
+    const container = document.getElementById("tab-pane-container");
+    if (container) container.style.display = t === gpioTabIndex ? "none" : "";
     // Alle VControl-Panes
     vControlTabs.forEach((tab, i) => {
         const pane = document.getElementById(`pane-${i}`);
@@ -411,14 +533,14 @@ function onSectionChange(t, i) {
 // ── INI Daten laden (nur State füllen, kein DOM) ─────────────────────────────
 function loadIniData(t) { 
     const url = `ini_handler.php?table=${t}&pfn=${getPfnId()}&ts=` + Date.now();
-    console.log(`[loadIniData] t=${t} url=${url} pfnId=${getPfnId()}`);
+    // console.log(`[loadIniData] t=${t} url=${url} pfnId=${getPfnId()}`);
     return fetch(url)
         .then(r => {
-            console.log(`[loadIniData] t=${t} HTTP status=${r.status}`);
+            // console.log(`[loadIniData] t=${t} HTTP status=${r.status}`);
             return r.json();
         })
         .then(data => {
-            console.log(`[loadIniData] t=${t} response=`, JSON.stringify(data));
+            // console.log(`[loadIniData] t=${t} response=`, JSON.stringify(data));
             if (data.error) { showStatus(t, "Fehler: " + data.error, true); return; }
             const s = state[t];
             s.adjPos       = data.pos;
@@ -430,7 +552,7 @@ function loadIniData(t) {
             } else {
                 s.sections = sliderLimits.slice();
             }
-            console.log(`[loadIniData] t=${t} state=`, JSON.stringify(s));
+            // console.log(`[loadIniData] t=${t} state=`, JSON.stringify(s));
         })
         .catch(err => {
             console.error(`[loadIniData] t=${t} catch:`, err);
