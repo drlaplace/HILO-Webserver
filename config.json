@@ -520,6 +520,410 @@
         }
       ]
     },
+    "201": {
+      "name": "Pulse 1",
+      "pfnId": 21,
+      "type": "CIPG",
+      "supportsCoupling": false,
+      "ustep": 0.15,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-"
+          ],
+          "default": "-",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 10,
+          "max": 600,
+          "default": 100,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 3,
+          "max": 1000,
+          "default": 3,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "t2time",
+          "label": "t2 time",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.1,
+          "max": 200,
+          "default": 200,
+          "cmd": "t2"
+        },
+        {
+          "id": "tr_rise",
+          "label": "tr",
+          "unit": "µs",
+          "type": "select",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "default": "1",
+          "cmd": "Rise"
+        },
+        {
+          "id": "td_width",
+          "label": "td",
+          "unit": "µs",
+          "type": "select",
+          "options": [
+            "500",
+            "1000",
+            "2000"
+          ],
+          "default": "2000",
+          "cmd": "Width"
+        },
+        {
+          "id": "impedance",
+          "label": "Impedance",
+          "unit": "Ω",
+          "type": "select",
+          "options": [
+            "2",
+            "4",
+            "10",
+            "20",
+            "30",
+            "50",
+            "900",
+            "150"
+          ],
+          "default": "10",
+          "cmd": "Impedance"
+        },
+        {
+          "id": "car_output",
+          "label": "Output",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "E.U.T",
+            "Clamp"
+          ],
+          "default": "E.U.T",
+          "cmd": "Output"
+        }
+      ],
+      "subUnit": "CIPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "VW"
+        }
+      ]
+    },
+    "202": {
+      "name": "Pulse 1",
+      "pfnId": 21,
+      "type": "CIPG",
+      "supportsCoupling": false,
+      "ustep": 0.15,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "pulses",
+          "label": "No. of Pulses",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "PulsNo"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 10,
+          "max": 600,
+          "default": 100,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "reptime",
+          "label": "Repetition time",
+          "unit": "ms",
+          "type": "number",
+          "min": 3,
+          "max": 1000,
+          "default": 3,
+          "cmd": "RepTime"
+        },
+        {
+          "id": "t2time",
+          "label": "t2 time",
+          "unit": "ms",
+          "type": "number",
+          "min": 0,
+          "max": 0,
+          "default": 0,
+          "cmd": "t2"
+        },
+        {
+          "id": "tr_rise",
+          "label": "tr",
+          "unit": "µs",
+          "type": "select",
+          "options": [
+            "1"
+          ],
+          "default": "1",
+          "cmd": "Rise"
+        },
+        {
+          "id": "td_width",
+          "label": "td",
+          "unit": "µs",
+          "type": "select",
+          "options": [
+            "50"
+          ],
+          "default": "50",
+          "cmd": "Width"
+        },
+        {
+          "id": "impedance",
+          "label": "Impedance",
+          "unit": "Ω",
+          "type": "select",
+          "options": [
+            "2",
+            "4",
+            "10",
+            "20",
+            "30",
+            "50",
+            "900",
+            "150"
+          ],
+          "default": "10",
+          "cmd": "Impedance"
+        },
+        {
+          "id": "car_output",
+          "label": "Output",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "E.U.T",
+            "Clamp"
+          ],
+          "default": "E.U.T",
+          "cmd": "Output"
+        }
+      ],
+      "subUnit": "CIPG",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "Ladespannung"
+        },
+        {
+          "index": 1,
+          "name": "Clamp"
+        }
+      ]
+    },
+    "203": {
+      "name": "EFTG-C",
+      "pfnId": 24,
+      "type": "EFTC",
+      "supportsCoupling": false,
+      "ustep": 0.2,
+      "monitor": [
+        {
+          "id": "U",
+          "label": "Spannung",
+          "unit": "V",
+          "bar": true
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "frequency",
+          "label": "Frequency",
+          "unit": "kHz",
+          "type": "number",
+          "min": 5,
+          "max": 1000,
+          "default": 1,
+          "cmd": "Frequency"
+        },
+        {
+          "id": "voltage",
+          "label": "Voltage",
+          "unit": "V",
+          "type": "number",
+          "min": 200,
+          "max": 800,
+          "default": 100,
+          "cmd": "Voltage"
+        },
+        {
+          "id": "polarity",
+          "label": "Polarity",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "+",
+            "-",
+            "+/-"
+          ],
+          "default": "+",
+          "cmd": "Pol"
+        },
+        {
+          "id": "duration",
+          "label": "Duration",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.01,
+          "max": 75,
+          "default": 15,
+          "cmd": "Duration"
+        },
+        {
+          "id": "period",
+          "label": "Period",
+          "unit": "ms",
+          "type": "number",
+          "min": 10,
+          "max": 1000,
+          "default": 300,
+          "cmd": "Period"
+        },
+        {
+          "id": "testtime",
+          "label": "Testtime",
+          "unit": "s",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 120,
+          "cmd": "TestTime"
+        },
+        {
+          "id": "car_output",
+          "label": "Output",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "E.U.T",
+            "Clamp"
+          ],
+          "default": "E.U.T",
+          "cmd": "Output"
+        }
+      ],
+      "subUnit": "EFTC",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "EUT"
+        },
+        {
+          "index": 1,
+          "name": "Clamp"
+        }
+      ],
+      "countdownParam": "testtime"
+    },
     "21": {
       "name": "PG10-504",
       "pfnId": 3,
@@ -1968,6 +2372,33 @@
           "label": "TSurge",
           "generatorRef": "30",
           "enabled": false
+        }
+      ]
+    },
+    "10": {
+      "name": "CAR-SYS",
+      "generatorId": 10,
+      "modules": [
+        {
+          "bit": 1,
+          "pfnId": 21,
+          "label": "Pulse 1",
+          "generatorRef": "201",
+          "enabled": true
+        },
+        {
+          "bit": 2,
+          "pfnId": 22,
+          "label": "Pulse 2a",
+          "generatorRef": "202",
+          "enabled": true
+        },
+        {
+          "bit": 4,
+          "pfnId": 24,
+          "label": "EFTG-C",
+          "generatorRef": "203",
+          "enabled": true
         }
       ]
     }
