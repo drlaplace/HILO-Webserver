@@ -20,7 +20,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         .header nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 20px; }
         .header nav a { text-decoration: none; font-weight: bold; color: #333; }
         .content {
-            padding: 16px 20px; max-width: 860px; margin: 0 auto 16px auto;
+            padding: 16px 20px; max-width: 968px; margin: 0 auto 16px auto;
             background: #fff; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.08);
         }
         /* ── Tabs ── */

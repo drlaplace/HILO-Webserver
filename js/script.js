@@ -339,14 +339,20 @@ function handleAction(action) {
 
     if (action === "Start") {
         const subUnit = genConfig ? (genConfig.subUnit || genConfig.type || "IPG") : "IPG";
-        const polMap  = { "+": 0, "-": 1, "+/-": 2 };
+
         pulses = 0; // Reset pulses count on start
+        // Wert-Mapping für bestimmte Select-Parameter
+        const VALUE_MAP = {
+            polarity: { "+": 0, "-": 1, "+/-": 2 },
+            output:   { "EUT": 1, "Clamp": 0 }
+        };
+
         genConfig.parameters.forEach(p => {
             const el = document.getElementById(p.id);
             if (!el) return;
             const cmdKey = p.cmd || p.id;
             let val = el.value;
-            if (p.id === "polarity") val = polMap[val] ?? 0;
+            if (VALUE_MAP[p.id]) val = VALUE_MAP[p.id][val] ?? val;
             sendCommand(`${generatorId}:Parameter:${subUnit}:${cmdKey}:${val}`);
         });
 
@@ -387,7 +393,7 @@ function sendCommand(cmd) {
 }
 
 function showOutput(text) {
-    const el = document.getElementById("output");
+    const el = document.getElementById("output-text");
     if (el) el.textContent = text;
 }
 

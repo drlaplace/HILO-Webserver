@@ -575,7 +575,7 @@
           "unit": "V",
           "type": "number",
           "min": 10,
-          "max": 600,
+          "max": 660,
           "default": 100,
           "cmd": "Voltage"
         },
@@ -646,15 +646,15 @@
           "cmd": "Impedance"
         },
         {
-          "id": "car_output",
+          "id": "output",
           "label": "Output",
           "unit": "",
           "type": "select",
           "options": [
-            "E.U.T",
+            "EUT",
             "Clamp"
           ],
-          "default": "E.U.T",
+          "default": "EUT",
           "cmd": "Output"
         }
       ],
@@ -725,7 +725,7 @@
           "unit": "V",
           "type": "number",
           "min": 10,
-          "max": 600,
+          "max": 660,
           "default": 100,
           "cmd": "Voltage"
         },
@@ -790,15 +790,15 @@
           "cmd": "Impedance"
         },
         {
-          "id": "car_output",
+          "id": "output",
           "label": "Output",
           "unit": "",
           "type": "select",
           "options": [
-            "E.U.T",
+            "EUT",
             "Clamp"
           ],
-          "default": "E.U.T",
+          "default": "EUT",
           "cmd": "Output"
         }
       ],
@@ -850,8 +850,8 @@
           "label": "Voltage",
           "unit": "V",
           "type": "number",
-          "min": 200,
-          "max": 800,
+          "min": 10,
+          "max": 1000,
           "default": 100,
           "cmd": "Voltage"
         },
@@ -899,15 +899,15 @@
           "cmd": "TestTime"
         },
         {
-          "id": "car_output",
+          "id": "output",
           "label": "Output",
           "unit": "",
           "type": "select",
           "options": [
-            "E.U.T",
+            "EUT",
             "Clamp"
           ],
-          "default": "E.U.T",
+          "default": "EUT",
           "cmd": "Output"
         }
       ],
