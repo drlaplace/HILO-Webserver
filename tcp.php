@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$host = "192.168.1.77";
+$host = "127.0.0.1";
 $port = 8081;
 
 // Persistente Verbindung pro Session
