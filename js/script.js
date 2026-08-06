@@ -9,19 +9,31 @@ let genConfig       = null;
 let globalConfig    = null;   // komplette config.json (für cdnList)
 let isMultiDevice   = false;  // Kombigerät-Modus
 let activeModuleIdx = 0;      // aktiver Modul-Tab-Index
-let debugMode       = true;
+let debugMode         = true;
+let activeMonitorList = [];   // aktive Monitor-Felder (nach Debug-Filter)
 
 document.addEventListener("DOMContentLoaded", () => {
     init();
     document.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", () => handleAction(btn.dataset.action));
     });
-    setRunButtonsEnabled(false);
+    setAllButtonsEnabled(false);
 });
 
 // ── Buttons ───────────────────────────────────────────────────────────────────
 function setRunButtonsEnabled(enabled) {
     ["Start", "Pause", "Stop"].forEach(action => {
+        const btn = document.querySelector(`button[data-action="${action}"]`);
+        if (btn) {
+            btn.disabled      = !enabled;
+            btn.style.opacity = enabled ? "1" : "0.4";
+            btn.style.cursor  = enabled ? "pointer" : "not-allowed";
+        }
+    });
+}
+
+function setAllButtonsEnabled(enabled) {
+    ["On", "Off", "Start", "Pause", "Stop"].forEach(action => {
         const btn = document.querySelector(`button[data-action="${action}"]`);
         if (btn) {
             btn.disabled      = !enabled;
@@ -54,16 +66,34 @@ function loadDefaults() {
     fetch("config.json?ts=" + Date.now())
         .then(res => res.json())
         .then(config => {
-            globalConfig  = config;
+            globalConfig = config;
             localStorage.setItem("generatorId", generatorId);
+            console.log("Generator ID:", generatorId);
 
-            // Multi-Device Modus prüfen (generatorId 1 oder 2 → immer Multi)
+            // Hilfsfunktion zum Aktivieren/Deaktivieren der On/Off-Buttons
+            function enablePowerButtons(enable) {
+                ["On", "Off"].forEach(action => {
+                    const btn = document.querySelector(`button[data-action="${action}"]`);
+                    if (btn) {
+                        btn.disabled = !enable;
+                        btn.style.opacity = enable ? "1" : "0.5";
+                        btn.style.cursor = enable ? "pointer" : "not-allowed";
+                    }
+                });
+            }
+
+            // Multi-Device Modus prüfen
             const md = config.multiDevices && config.multiDevices[String(generatorId)];
             if (md) {
                 isMultiDevice = true;
+
+                // On/Off aktivieren
+                enablePowerButtons(true);
+
                 document.getElementById("gen-name").textContent = md.name;
                 buildModuleTabs(md, config);
-                // Ersten enabled Tab aktivieren
+
+                // Ersten aktivierten Tab laden
                 const firstIdx = md.modules.findIndex(m => m.enabled);
                 loadModule(md, config, firstIdx >= 0 ? firstIdx : 0);
                 return;
@@ -71,11 +101,26 @@ function loadDefaults() {
 
             // Einzelgerät
             isMultiDevice = false;
-            genConfig     = config.generators[String(generatorId)] || config.fallback;
+            const knownGen = config.generators[String(generatorId)];
+
+            genConfig = knownGen || config.fallback;
             generatorName = genConfig.name || "Unbekannt";
+
+            // Unbekannter Generator -> alle Buttons sperren
+            if (!knownGen) {
+                enablePowerButtons(false);
+                setAllButtonsEnabled(false);
+                document.getElementById("gen-name").textContent = "Unbekannter Generator";
+                return;
+            }
+
+            // Bekannter Generator -> On/Off aktivieren
+            enablePowerButtons(true);
+
             localStorage.setItem("pfnId", genConfig.pfnId || 9);
             document.getElementById("gen-name").textContent = generatorName;
-            ustep      = parseFloat(genConfig.ustep);
+
+            ustep = parseFloat(genConfig.ustep);
             maxVoltage = (getParamCfg("voltage") || {}).max || 12000;
 
             buildParamFields(genConfig.parameters);
@@ -92,7 +137,16 @@ function loadDefaults() {
             }
         });
 }
-
+function enablePowerButtons(enable) {
+    ["On", "Off"].forEach(action => {
+        const btn = document.querySelector(`button[data-action="${action}"]`);
+        if (btn) {
+            btn.disabled = !enable;
+            btn.style.opacity = enable ? "1" : "0.5";
+            btn.style.cursor = enable ? "pointer" : "not-allowed";
+        }
+    });
+}
 // ── Parameter-Felder aufbauen ─────────────────────────────────────────────────
 function buildParamFields(parameters) {
     const container = document.getElementById("param-fields");
@@ -151,7 +205,11 @@ function buildMonitorFields(monitorList) {
     const container = document.getElementById("monitor-fields");
     container.innerHTML = "";
 
-    monitorList.forEach(m => {
+    // Im nicht-Debug-Modus Rdy und Pulse ausblenden
+    const DEBUG_ONLY = ["Rdy", "Pulse"];
+    activeMonitorList = debugMode ? monitorList : monitorList.filter(m => !DEBUG_ONLY.includes(m.id));
+
+    activeMonitorList.forEach(m => {
         const div = document.createElement("div");
         div.className = "monitor-row";
         div.id = `mon-row-${m.id}`;
@@ -420,8 +478,8 @@ function stopMonitoring() {
 function fetchMonitorValues() {
     if (!generatorId || !genConfig) return;
 
-    const monitorList = genConfig.monitor || [];
-    const monitorCmd  = monitorList
+    const activeList  = activeMonitorList.length > 0 ? activeMonitorList : (genConfig.monitor || []);
+    const monitorCmd  = activeList
         .map(m => `${generatorId}:Monitor:${m.id}`)
         .join("\n");
 
@@ -435,7 +493,7 @@ function fetchMonitorValues() {
         });
 
         // Alle Monitor-Felder aus Config aktualisieren
-        monitorList.forEach(m => {
+        activeMonitorList.forEach(m => {
             if (!(m.id in monitorData)) return;
             const el = document.getElementById(`mon-${m.id}`);
             if (!el) return;
@@ -596,7 +654,7 @@ function loadModule(md, config, idx) {
     buildParamFields(genConfig.parameters || []);
     buildMonitorFields(genConfig.monitor || []);
 
-    // Coupling
+    // Coupling 
     const couplingSection = document.getElementById("coupling-section");
     if (genConfig.supportsCoupling) {
         couplingSection.style.display = "block";
