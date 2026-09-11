@@ -582,7 +582,7 @@
         {
           "id": "reptime",
           "label": "Repetition time",
-          "unit": "ms",
+          "unit": "s",
           "type": "number",
           "min": 3,
           "max": 1000,

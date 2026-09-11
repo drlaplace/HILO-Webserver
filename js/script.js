@@ -9,7 +9,7 @@ let genConfig       = null;
 let globalConfig    = null;   // komplette config.json (für cdnList)
 let isMultiDevice   = false;  // Kombigerät-Modus
 let activeModuleIdx = 0;      // aktiver Modul-Tab-Index
-let debugMode         = true;
+let debugMode         = false;
 let activeMonitorList = [];   // aktive Monitor-Felder (nach Debug-Filter)
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -402,7 +402,8 @@ function handleAction(action) {
         // Wert-Mapping für bestimmte Select-Parameter
         const VALUE_MAP = {
             polarity: { "+": 0, "-": 1, "+/-": 2 },
-            output:   { "EUT": 1, "Clamp": 0 }
+            output:   { "EUT": 1, "Clamp": 0 },
+            type:     { "mechanical": 0, "electronical": 1 }
         };
 
         genConfig.parameters.forEach(p => {
@@ -478,8 +479,9 @@ function stopMonitoring() {
 function fetchMonitorValues() {
     if (!generatorId || !genConfig) return;
 
-    const activeList  = activeMonitorList.length > 0 ? activeMonitorList : (genConfig.monitor || []);
-    const monitorCmd  = activeList
+    // Alle Monitor-Kanäle abfragen (auch wenn nicht angezeigt — z.B. Rdy für Auto-Stop)
+    const fullMonitorList = genConfig.monitor || [];
+    const monitorCmd = fullMonitorList
         .map(m => `${generatorId}:Monitor:${m.id}`)
         .join("\n");
 
@@ -492,7 +494,7 @@ function fetchMonitorValues() {
             if (parts.length >= 4) monitorData[parts[2]] = parseInt(parts[3], 10);
         });
 
-        // Alle Monitor-Felder aus Config aktualisieren
+        // Angezeigte Monitor-Felder aktualisieren (gefiltert nach debugMode)
         activeMonitorList.forEach(m => {
             if (!(m.id in monitorData)) return;
             const el = document.getElementById(`mon-${m.id}`);
@@ -511,6 +513,8 @@ function fetchMonitorValues() {
                 if (bar) bar.style.width = Math.min((val / maxVoltage) * 100, 100) + "%";
             }
         });
+
+        // Interne Verarbeitung mit vollständigen Daten (unabhängig von debugMode)
 
         // Eval-Box (nur wenn ixtlimit und Rdy + Ipeak vorhanden)
         const ixtEl = document.getElementById("ixtlimit");
