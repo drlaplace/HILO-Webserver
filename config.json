@@ -584,9 +584,9 @@
           "label": "Repetition time",
           "unit": "s",
           "type": "number",
-          "min": 3,
+          "min": 1,
           "max": 1000,
-          "default": 3,
+          "default": 1,
           "cmd": "RepTime"
         },
         {
@@ -734,9 +734,9 @@
           "label": "Repetition time",
           "unit": "ms",
           "type": "number",
-          "min": 3,
+          "min": 1,
           "max": 1000,
-          "default": 3,
+          "default": 1,
           "cmd": "RepTime"
         },
         {
@@ -923,6 +923,157 @@
         }
       ],
       "countdownParam": "testtime"
+    },
+    "204": {
+      "name": "CAR-PFS80",
+      "pfnId": 26,
+      "type": "CPFS",
+      "supportsCoupling": false,
+      "ustep": 0.2,
+      "monitor": [
+        {
+          "id": "Pulse",
+          "label": "Pulse",
+          "unit": "",
+          "bar": false
+        },
+        {
+          "id": "Rdy",
+          "label": "Rdy",
+          "unit": "",
+          "bar": false
+        }
+      ],
+      "parameters": [
+        {
+          "id": "cycles",
+          "label": "Cycles",
+          "unit": "",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 10,
+          "cmd": "Cycle"
+        },
+        {
+          "id": "mode",
+          "label": "Mode",
+          "unit": "",
+          "type": "select",
+          "options": [
+            "static open",
+            "negated"
+          ],
+          "default": "static open",
+          "cmd": "Mode"
+        },
+        {
+          "id": "waittime",
+          "label": "Waittime",
+          "unit": "s",
+          "type": "number",
+          "min": 1,
+          "max": 1000,
+          "default": 1,
+          "cmd": "Waittime"
+        },
+        {
+          "id": "offtime",
+          "label": "Off time",
+          "unit": "ms",
+          "type": "select",
+          "options": [
+            "static",
+            "manual"
+          ],
+          "default": "static",
+          "cmd": "Offtime"
+        },
+        {
+          "id": "offstart",
+          "label": "off start",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.01,
+          "cmd": "OffStart"
+        },
+        {
+          "id": "offstep",
+          "label": "off step",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.01,
+          "cmd": "OffStep"
+        },
+        {
+          "id": "offend",
+          "label": "off end",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.1,
+          "cmd": "OffEnd"
+        },
+        {
+          "id": "ontime",
+          "label": "On time",
+          "unit": "ms",
+          "type": "select",
+          "options": [
+            "static",
+            "manual"
+          ],
+          "default": "static",
+          "cmd": "Ontime"
+        },
+        {
+          "id": "onstart",
+          "label": "on start",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.01,
+          "cmd": "OnStart"
+        },
+        {
+          "id": "onstep",
+          "label": "on step",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.01,
+          "cmd": "OnStep"
+        },
+        {
+          "id": "onend",
+          "label": "on end",
+          "unit": "ms",
+          "type": "number",
+          "min": 0.001,
+          "max": 90000,
+          "default": 0.1,
+          "cmd": "OnEnd"
+        }
+      ],
+      "subUnit": "CPFS",
+      "vControlTabs": [
+        {
+          "index": 0,
+          "name": "EUT"
+        },
+        {
+          "index": 1,
+          "name": "Clamp"
+        }
+      ],
+      "countdownParam": "cycles"
     },
     "12": {
       "name": "PG2804",
@@ -2709,6 +2860,26 @@
           "pfnId": 24,
           "label": "EFTG-C",
           "generatorRef": "203",
+          "enabled": true
+        }
+      ]
+    },
+    "16": {
+      "name": "CAR-PFS80",
+      "generatorId": 16,
+      "modules": [
+        {
+          "bit": 1,
+          "pfnId": 26,
+          "label": "PFS",
+          "generatorRef": "204",
+          "enabled": true
+        },
+        {
+          "bit": 2,
+          "pfnId": 27,
+          "label": "DOT",
+          "generatorRef": "205",
           "enabled": true
         }
       ]
